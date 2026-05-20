@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#07100a">
+    <meta name="description" content="Pai Pai — доставка домашней еды в Алматы. Сытно, вкусно, по-домашнему.">
+    <title>Pai Pai | Доставка еды Алматы</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Marck+Script&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ПРЕЛОАДЕР -->
+<div id="preloader">
+    <div style="text-align:center;">
+        <div class="loader-logo">Пай Пай</div>
+        <div class="spinner"></div>
+        <p class="loader-text">Загрузка меню...</p>
+    </div>
+</div>
+
+<!-- ВИДЕО ФОН -->
+<video id="bg-video" autoplay muted loop playsinline preload="none">
+    <source src="267591_small.mp4" type="video/mp4">
+</video>
+
+<!-- ШАПКА -->
+<header>
+    <nav>
+        <a href="index.html" class="brand">Пай Пай<span>.</span></a>
+
+        <div class="nav-links">
+            <a href="index.html" class="nav-link" style="color:var(--primary);">Меню</a>
+            <a href="catering.html" class="nav-link catering-link">
+                <i class="fas fa-utensils" style="font-size:.72em;margin-right:4px;"></i>Кейтеринг
+            </a>
+            <a href="#location" class="nav-link">Контакты</a>
+        </div>
+
+        <div class="nav-controls">
+            <a href="admin.html" class="nav-btn" title="Управление" style="font-size:1rem;">
+                <i class="fas fa-sliders-h"></i>
+            </a>
+            <div class="nav-btn cart-nav-btn" onclick="sendOrder()" title="Корзина" style="cursor:pointer;">
+                <i class="fas fa-shopping-basket"></i>
+                <span id="cart-count">0</span>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-content">
+        <h1>Пай Пай</h1>
+        <div class="hero-divider">
+            <span></span>
+            <i class="fas fa-leaf"></i>
+            <span></span>
+        </div>
+        <p>Сытно, вкусно и по-домашнему</p>
+    </div>
+</section>
+
+<!-- ГЛАВНЫЙ КОНТЕНТ -->
+<main class="wrapper">
+
+    <!-- МЕНЮ -->
+    <section id="menu-section">
+        <h2 class="section-title">Наше Меню</h2>
+        <div id="work-status-badge"></div>
+
+        <!-- Категории -->
+        <div class="categories" id="categories-screen">
+            <button class="cat-btn" onclick="filterCat('breakfast',this)">
+                <img src="img/cat_breakfast.webp" alt="Завтраки"><span>Завтраки</span>
+            </button>
+            <button class="cat-btn" onclick="filterCat('first',this)">
+                <img src="img/cat1.jpg" alt="Первые блюда"><span>Первые блюда</span>
+            </button>
+            <button class="cat-btn" onclick="filterCat('second',this)">
+                <img src="img/cat2.jpg" alt="Вторые блюда"><span>Вторые блюда</span>
+            </button>
+            <button class="cat-btn" onclick="filterCat('bakery',this)">
+                <img src="img/cat3.jpg" alt="Выпечка"><span>Выпечка</span>
+            </button>
+            <button class="cat-btn" onclick="filterCat('salads',this)">
+                <img src="img/cat4.jpg" alt="Салаты"><span>Салаты</span>
+            </button>
+            <button class="cat-btn" onclick="filterCat('kids',this)">
+                <img src="img/cat_kids.webp" alt="Детское меню"><span>Детское меню</span>
+            </button>
+            <button class="cat-btn" onclick="filterCat('sets',this)">
+                <img src="img/cat5.jpg" alt="Сеты и комбо"><span>Сеты и комбо</span>
+            </button>
+            <button class="cat-btn" onclick="filterCat('semi',this)">
+                <img src="img/cat6.webp" alt="Полуфабрикаты"><span>Полуфабрикаты</span>
+            </button>
+            <button class="cat-btn" onclick="filterCat('dessert',this)">
+                <img src="img/cat7.jpg" alt="Десерты"><span>Десерты</span>
+            </button>
+            <button class="cat-btn" onclick="filterCat('cakes',this)">
+                <img src="img/cat_cakes.webp" alt="Торты"><span>Торты</span>
+            </button>
+            <button class="cat-btn" onclick="filterCat('pies',this)">
+                <img src="img/cat_pies.webp" alt="Пироги"><span>Пироги</span>
+            </button>
+            <button class="cat-btn" onclick="filterCat('drinks',this)">
+                <img src="img/cat8.jpg" alt="Напитки"><span>Напитки</span>
+            </button>
+            <button class="cat-btn" onclick="filterCat('sauce',this)">
+                <img src="img/cat9.jpg" alt="Соусы"><span>Соусы и хлеб</span>
+            </button>
+        </div>
+
+        <!-- Товары категории -->
+        <div id="menu-screen" style="display:none;">
+            <button class="back-btn" onclick="showCategories()">
+                <i class="fas fa-arrow-left"></i> Назад к категориям
+            </button>
+            <h3 id="current-category-title"
+                style="text-align:center;color:var(--primary);text-transform:uppercase;font-size:.84rem;letter-spacing:2px;font-weight:700;margin-bottom:18px;opacity:.8;"></h3>
+
+            <div id="type-filters" class="type-filters-wrap"></div>
+
+            <div class="search-wrap">
+                <i class="fas fa-search"></i>
+                <input type="text" id="menu-search" placeholder="Поиск в категории..." oninput="searchMenu()">
+            </div>
+
+            <div class="menu-grid" id="menu-container"></div>
+        </div>
+    </section>
+
+    <!-- КОНТАКТЫ -->
+    <section id="location">
+        <h2 class="section-title">Контакты</h2>
+        <div class="info-card">
+            <div class="info-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <p>г. Алматы, ЖК Gul Dala, проспект Райымбека 351/1, блок 1</p>
+            </div>
+            <div class="info-item">
+                <i class="fas fa-clock"></i>
+                <p>Ежедневно: 8:00 — 22:00</p>
+            </div>
+            <a href="https://2gis.kz/almaty/firm/70000001087430743" target="_blank" rel="noopener" class="btn-2gis">
+                <i class="fas fa-location-arrow"></i> Открыть в 2ГИС
+            </a>
+            <div class="social-links">
+                <a href="https://wa.me/77052363788" class="social-icon wa" aria-label="WhatsApp">
+                    <i class="fab fa-whatsapp"></i>
+                </a>
+                <a href="https://www.instagram.com/paipai_cafe" class="social-icon ig" aria-label="Instagram">
+                    <i class="fab fa-instagram"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- МОДАЛКА: ДЕТАЛИ ТОВАРА -->
+<div id="productModal" class="modal-overlay" onclick="closeModal(event)">
+    <div class="modal-card" role="dialog" aria-modal="true">
+        <span class="close-btn" onclick="document.getElementById('productModal').style.display='none'" aria-label="Закрыть">×</span>
+        <img id="modalImg" src="" alt="">
+        <div class="modal-info">
+            <h2 id="modalName"></h2>
+            <div id="modalCount"></div>
+            <p id="modalDesc"></p>
+            <div id="upsell-container"></div>
+            <div class="modal-footer">
+                <span id="modalPrice"></span>
+                <button id="modalAddBtn" class="btn-sm" style="width:auto;padding:12px 24px;font-size:.84rem;">В КОРЗИНУ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- МОДАЛКА: КОРЗИНА И ОФОРМЛЕНИЕ ЗАКАЗА -->
+<div id="orderModal" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-card" role="dialog" aria-modal="true">
+        <span class="close-btn" onclick="document.getElementById('orderModal').style.display='none'" aria-label="Закрыть">×</span>
+        <div class="modal-info">
+            <h2>Ваш заказ</h2>
+
+            <!-- Список товаров в корзине -->
+            <div id="cart-content"></div>
+
+            <!-- Итог и форма -->
+            <div id="cart-footer" style="display:none;">
+                <div class="order-total-line">
+                    <span class="order-total-label">Итого к оплате:</span>
+                    <span class="order-total-val" id="order-total-val">0 ₸</span>
+                </div>
+                <label class="form-label">Адрес доставки:</label>
+                <input type="text" id="order-address" placeholder="Улица, дом, квартира">
+                <div class="persons-row">
+                    <span>Приборов:</span>
+                    <input type="number" id="order-persons" value="1" min="1">
+                </div>
+                <button class="btn-sm confirm-btn" onclick="confirmAndSendOrder()">
+                    <i class="fab fa-whatsapp"></i> ПОДТВЕРДИТЬ В WHATSAPP
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<!-- Наши скрипты -->
+<script src="js/config.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

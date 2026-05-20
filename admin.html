@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Управление | Pai Pai</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Marck+Script&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { min-height:100vh; padding:20px 16px 60px; }
+        /* Центруем экран логина */
+        #login-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; }
+        #admin-content { display:none; }
+    </style>
+</head>
+<body>
+
+<!-- ЭКРАН ЛОГИНА -->
+<div id="login-screen">
+    <div class="admin-box" style="max-width:360px;text-align:center;">
+        <div class="admin-title">Pai Pai Admin</div>
+        <p style="opacity:.44;font-size:.84rem;margin-bottom:18px;">Введите пароль для входа</p>
+        <input type="password" id="admin-pass" placeholder="Пароль">
+        <button class="btn-sm" id="login-btn" style="margin-top:12px;height:48px;" onclick="adminLogin()">Войти</button>
+        <p id="login-error" style="color:#e74c3c;font-size:.78rem;margin-top:10px;min-height:1em;"></p>
+    </div>
+</div>
+
+<!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
+<div id="admin-content">
+    <div class="admin-box">
+
+        <!-- Шапка -->
+        <div class="admin-header-row">
+            <a href="index.html" class="admin-back"><i class="fas fa-arrow-left"></i> На сайт</a>
+            <button class="admin-logout" onclick="adminLogout()">Выйти</button>
+        </div>
+
+        <!-- ФОРМА ДОБАВЛЕНИЯ / РЕДАКТИРОВАНИЯ -->
+        <h3 id="form-title" style="font-size:1.1rem;margin-bottom:14px;">➕ Новое блюдо</h3>
+
+        <input type="text"   id="p-name"  placeholder="Название *">
+        <input type="number" id="p-price" placeholder="Цена (₸) *">
+
+        <label class="field-label">Описание:</label>
+        <textarea id="p-desc" placeholder="Краткое описание (необязательно)"></textarea>
+        <input type="text" id="p-count" placeholder="Граммовка / Количество порций">
+
+        <label class="field-label">Категория:</label>
+        <select id="p-cat">
+            <option value="breakfast">Завтраки</option>
+            <option value="first">Первые блюда</option>
+            <option value="second">Вторые блюда</option>
+            <option value="bakery">Выпечка</option>
+            <option value="salads">Салаты</option>
+            <option value="kids">Детское меню</option>
+            <option value="sets">Сеты и комбо</option>
+            <option value="semi">Полуфабрикаты</option>
+            <option value="dessert">Десерты</option>
+            <option value="cakes">Торты</option>
+            <option value="pies">Пироги</option>
+            <option value="drinks">Напитки</option>
+            <option value="sauce">Соусы и хлеб</option>
+        </select>
+
+        <label class="field-label">Тип блюда (для фильтра):</label>
+        <select id="p-type">
+            <option value="">— Без уточнения —</option>
+            <option value="meat">🥩 Из мяса</option>
+            <option value="chicken">🍗 Из курицы</option>
+            <option value="dough">🥟 Мучные</option>
+            <option value="steam">💨 На пару</option>
+            <option value="veg">🌿 Без мяса</option>
+        </select>
+
+        <label class="field-label">Бейдж:</label>
+        <select id="product-badge">
+            <option value="">— Без бейджа —</option>
+            <option value="hit">ХИТ 🔥</option>
+            <option value="new">НОВИНКА ✨</option>
+        </select>
+
+        <label class="upload-area" for="p-file">
+            <input type="file" id="p-file" accept="image/*" style="display:none;" onchange="showPreview(this)">
+            <span id="upload-label">📸 Выбрать фото</span>
+            <img id="img-preview" alt="">
+        </label>
+
+        <div class="admin-btn-row">
+            <button class="btn-sm" id="add-btn" onclick="saveProduct()" style="flex:1;">Опубликовать</button>
+            <button class="btn-cancel" id="cancel-btn" style="display:none;" onclick="resetForm()">Отмена</button>
+        </div>
+
+        <!-- СПИСОК ТОВАРОВ -->
+        <hr class="admin-divider">
+        <h3 style="font-size:.98rem;color:var(--primary);margin-bottom:10px;">Список меню</h3>
+
+        <div class="admin-filters">
+            <input type="text" id="admin-search" placeholder="🔍 Поиск..." oninput="fetchList()">
+            <select id="admin-filter-cat" onchange="fetchList()">
+                <option value="all">Все категории</option>
+                <option value="breakfast">Завтраки</option>
+                <option value="first">Первые блюда</option>
+                <option value="second">Вторые блюда</option>
+                <option value="bakery">Выпечка</option>
+                <option value="salads">Салаты</option>
+                <option value="kids">Детское</option>
+                <option value="sets">Сеты</option>
+                <option value="semi">Полуфабрикаты</option>
+                <option value="dessert">Десерты</option>
+                <option value="cakes">Торты</option>
+                <option value="pies">Пироги</option>
+                <option value="drinks">Напитки</option>
+                <option value="sauce">Соусы</option>
+            </select>
+        </div>
+
+        <div id="product-list">
+            <p class="admin-empty">Загрузка...</p>
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="admin-toast"></div>
+
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="js/config.js"></script>
+
+<script>
+'use strict';
+
+const IMGBB_KEY   = '19b2ea0cacae4c9328806e4c678db140';
+const ADMIN_EMAIL = 'admin@paipai.kz';
+let editId = null;
+
+/* ── ЛОГИН ─────────────────────────────────────────────── */
+async function adminLogin() {
+    const pass  = document.getElementById('admin-pass').value.trim();
+    const errEl = document.getElementById('login-error');
+    const btn   = document.getElementById('login-btn');
+
+    errEl.textContent = '';
+    if (!pass) { errEl.textContent = 'Введите пароль.'; return; }
+
+    btn.disabled = true; btn.textContent = 'Вход...';
+
+    try {
+        await firebase.auth().signInWithEmailAndPassword(ADMIN_EMAIL, pass);
+        showAdminPanel();
+    } catch(e) {
+        const msgs = {
+            'auth/wrong-password':         '❌ Неверный пароль.',
+            'auth/user-not-found':         '❌ Пользователь не найден.',
+            'auth/invalid-credential':     '❌ Неверный логин или пароль.',
+            'auth/too-many-requests':      '⏳ Много попыток. Подождите.',
+            'auth/network-request-failed': '🌐 Нет соединения с интернетом.',
+        };
+        errEl.textContent = msgs[e.code] || 'Ошибка: ' + e.message;
+    } finally {
+        btn.disabled = false; btn.textContent = 'Войти';
+    }
+}
+
+function adminLogout() {
+    firebase.auth().signOut().then(() => location.reload());
+}
+
+function showAdminPanel() {
+    document.getElementById('login-screen').style.display  = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    fetchList();
+}
+
+/* Автоматический вход если сессия активна */
+firebase.auth().onAuthStateChanged(user => {
+    if (user) showAdminPanel();
+});
+
+/* Enter в поле пароля */
+document.getElementById('admin-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') adminLogin();
+});
+
+/* ── ПРЕВЬЮ ФОТО ───────────────────────────────────────── */
+function showPreview(input) {
+    if (!input.files?.[0]) return;
+    const r = new FileReader();
+    r.onload = (e) => {
+        const img = document.getElementById('img-preview');
+        img.src = e.target.result; img.style.display = 'block';
+        document.getElementById('upload-label').style.display = 'none';
+    };
+    r.readAsDataURL(input.files[0]);
+}
+
+/* ── СОХРАНИТЬ ТОВАР ───────────────────────────────────── */
+async function saveProduct() {
+    if (!navigator.onLine) { alert('❌ Нет интернета!'); return; }
+
+    const btn       = document.getElementById('add-btn');
+    const fileInput = document.getElementById('p-file');
+    const name      = document.getElementById('p-name').value.trim();
+    const price     = parseInt(document.getElementById('p-price').value, 10);
+
+    if (!name || !price) { alert('Заполните название и цену!'); return; }
+    if (!editId && !fileInput.files[0]) { alert('Выберите фото!'); return; }
+
+    btn.disabled = true; btn.textContent = '⏳ Загружаем...';
+
+    try {
+        let imgUrl = null;
+
+        // 1. ImgBB
+        if (fileInput.files[0]) {
+            const fd = new FormData();
+            fd.append('image', fileInput.files[0]);
+            const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method:'POST', body:fd });
+            const data = await res.json();
+            if (!data.success) throw new Error('ImgBB: ' + (data.error?.message || 'ошибка'));
+            imgUrl = data.data.url;
+        }
+
+        // 2. Данные
+        const product = {
+            name, price,
+            desc:  document.getElementById('p-desc').value.trim()  || '',
+            count: document.getElementById('p-count').value.trim() || '',
+            cat:   document.getElementById('p-cat').value,
+            type:  document.getElementById('p-type').value,
+            badge: document.getElementById('product-badge').value,
+        };
+        if (imgUrl) product.img = imgUrl;
+
+        // 3. Firebase
+        const ref = editId ? database.ref('products/' + editId) : database.ref('products').push();
+        await ref.set(product);
+
+        showToast(editId ? '✅ Обновлено!' : '✅ Добавлено!');
+        resetForm();
+
+    } catch(err) {
+        console.error(err);
+        alert('⚠️ Ошибка: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = editId ? 'Сохранить изменения' : 'Опубликовать';
+    }
+}
+
+/* ── СПИСОК ТОВАРОВ ────────────────────────────────────── */
+function fetchList() {
+    database.ref('products').on('value', snap => {
+        const container = document.getElementById('product-list');
+        if (!container) return;
+
+        const q      = (document.getElementById('admin-search')?.value || '').toLowerCase();
+        const catF   = document.getElementById('admin-filter-cat')?.value || 'all';
+        const data   = snap.val();
+
+        if (!data) { container.innerHTML = '<p class="admin-empty">Список пуст</p>'; return; }
+
+        const keys = Object.keys(data).reverse().filter(id => {
+            const p = data[id];
+            const matchName = (p.name || '').toLowerCase().includes(q);
+            const matchCat  = catF === 'all' || p.cat === catF || p.category === catF;
+            return matchName && matchCat;
+        });
+
+        if (!keys.length) { container.innerHTML = '<p class="admin-empty">Ничего не найдено</p>'; return; }
+
+        container.innerHTML = keys.map(id => {
+            const p = data[id];
+            const isStop = p.available === false;
+            return `
+            <div class="list-item">
+                <img class="list-thumb" src="${p.img || ''}" alt=""
+                     onerror="this.style.display='none'">
+                <div class="list-info">
+                    <span class="list-name ${isStop ? 'unavail' : ''}">${p.name}</span>
+                    <span class="list-meta">${p.price} ₸ · ${p.cat || p.category || '—'}</span>
+                </div>
+                <div class="list-controls">
+                    <button class="list-btn btn-edit"   onclick="editItem('${id}')">Ред.</button>
+                    <button class="list-btn ${isStop ? 'btn-toggle-ret' : 'btn-toggle-stop'}"
+                            onclick="toggleStock('${id}',${isStop})">
+                        ${isStop ? 'Вернуть' : 'Стоп'}
+                    </button>
+                    <button class="list-btn btn-delete" onclick="deleteItem('${id}')">✕</button>
+                </div>
+            </div>`;
+        }).join('');
+    });
+}
+
+/* ── РЕДАКТИРОВАТЬ ─────────────────────────────────────── */
+function editItem(id) {
+    database.ref('products/' + id).once('value', snap => {
+        const p = snap.val(); if (!p) return;
+        editId = id;
+        setVal('p-name',        p.name  || '');
+        setVal('p-price',       p.price || '');
+        setVal('p-desc',        p.desc  || '');
+        setVal('p-count',       p.count || '');
+        setVal('p-cat',         p.cat || p.category || 'first');
+        setVal('p-type',        p.type  || '');
+        setVal('product-badge', p.badge || '');
+        document.getElementById('form-title').textContent = '✏️ Редактирование';
+        document.getElementById('add-btn').textContent = 'Сохранить изменения';
+        document.getElementById('cancel-btn').style.display = 'block';
+        window.scrollTo({ top:0, behavior:'smooth' });
+    });
+}
+
+/* ── СБРОС ФОРМЫ ───────────────────────────────────────── */
+function resetForm() {
+    editId = null;
+    ['p-name','p-price','p-desc','p-count'].forEach(id => setVal(id, ''));
+    setVal('p-cat','first'); setVal('p-type',''); setVal('product-badge','');
+    document.getElementById('p-file').value = '';
+    const prev = document.getElementById('img-preview');
+    prev.style.display = 'none'; prev.src = '';
+    document.getElementById('upload-label').style.display = 'block';
+    document.getElementById('form-title').textContent = '➕ Новое блюдо';
+    document.getElementById('add-btn').textContent = 'Опубликовать';
+    document.getElementById('cancel-btn').style.display = 'none';
+}
+
+/* ── ПЕРЕКЛЮЧИТЬ НАЛИЧИЕ ───────────────────────────────── */
+function toggleStock(id, isStop) {
+    database.ref('products/' + id).update({ available: isStop ? true : false });
+}
+
+/* ── УДАЛИТЬ ───────────────────────────────────────────── */
+function deleteItem(id) {
+    if (confirm('Удалить это блюдо навсегда?'))
+        database.ref('products/' + id).remove();
+}
+
+/* ── УТИЛИТЫ ────────────────────────────────────────────── */
+function setVal(id, v) { const el=document.getElementById(id); if(el) el.value=v; }
+
+function showToast(msg) {
+    const t = document.getElementById('admin-toast');
+    t.textContent = msg;
+    t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)';
+    setTimeout(() => {
+        t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(20px)';
+    }, 2600);
+}
+</script>
+</body>
+</html>
