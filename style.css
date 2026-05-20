@@ -455,60 +455,65 @@ nav {
 /* Пустая корзина */
 .cart-empty { text-align:center; padding:40px 20px; opacity:.38; }
 .cart-empty i { font-size:2.8rem; color:var(--primary); margin-bottom:12px; display:block; }
- /* ── БАННЕР КЕЙТЕРИНГА (ДЛЯ МОБИЛОК) ─────────────────────── */
-.catering-banner {
+ /* ── КНОПКА КЕЙТЕРИНГА (МОБИЛКА) ─────────────────────────── */
+.catering-mobile-btn {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: linear-gradient(135deg, rgba(61,186,114,0.12) 0%, rgba(61,186,114,0.04) 100%);
-    border: 1px solid rgba(61,186,114,0.25);
+    background: rgba(255, 255, 255, 0.06); /* Эффект стекла, как у категорий */
+    border: 1px solid var(--glass-warm); /* Легкая золотистая рамка */
     padding: 16px 20px;
-    border-radius: 20px;
+    border-radius: 18px;
     margin-bottom: 22px;
     text-decoration: none;
-    color: #ede9e0;
-    transition: transform 0.2s var(--ease), box-shadow 0.2s, border-color 0.2s;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    transition: border-color 0.22s, box-shadow 0.22s, transform 0.15s;
 }
 
-.catering-banner:hover {
-    transform: translateY(-3px);
-    border-color: rgba(61,186,114,0.5);
-    box-shadow: 0 8px 24px rgba(61,186,114,0.15);
+.catering-mobile-btn:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 20px rgba(196,140,93,0.14);
+    transform: translateY(-2px);
 }
 
-.catering-banner:active {
-    transform: scale(0.97);
+.catering-mobile-btn:active {
+    transform: scale(0.98);
 }
 
-.catering-banner-content h3 {
-    color: var(--green);
-    font-size: 1.05rem;
-    margin-bottom: 4px;
+.catering-mobile-text {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.catering-title {
+    font-size: 0.98rem;
     font-weight: 700;
+    color: var(--primary); /* Фирменный цвет Pai Pai */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.catering-banner-content p {
-    font-size: 0.82rem;
+.catering-desc {
+    font-size: 0.78rem;
+    color: #ede9e0;
     opacity: 0.75;
-    line-height: 1.4;
-    max-width: 90%;
+    line-height: 1.3;
 }
 
-.catering-banner-icon {
-    background: var(--green);
+.catering-mobile-arrow {
+    background: var(--primary);
     color: #fff;
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    margin-left: 10px;
+    margin-left: 12px;
     font-size: 1rem;
-    box-shadow: 0 4px 12px rgba(61,186,114,0.3);
 }
 /* ── КЕЙТЕРИНГ СТРАНИЦА ──────────────────────────────────── */
 .catering-hero {
