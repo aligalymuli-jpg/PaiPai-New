@@ -3,44 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!--
+        noindex + nofollow: Google не будет индексировать эту страницу.
+        Дополнительная защита: поисковики не найдут URL.
+    -->
     <meta name="robots" content="noindex, nofollow">
     <title>Управление | Pai Pai</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Marck+Script&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
         body { min-height:100vh; padding:20px 16px 60px; }
-        /* Центруем экран логина */
-        #login-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; }
+
+        /* ─── ВСЕ ТРИ ЭКРАНА — СКРЫТЫ ПО УМОЛЧАНИЮ ─────────────
+           КРИТИЧЕСКИ ВАЖНО: используем inline style="display:none"
+           а НЕ только CSS-класс. Это предотвращает "мигание"
+           контента до того, как Firebase проверит сессию.
+           ──────────────────────────────────────────────────────── */
+        #auth-check  { display:none; }
+        #login-screen { display:none; }
         #admin-content { display:none; }
+
+        /* ─── ЭКРАН ПРОВЕРКИ СЕССИИ ─────────────────────────── */
+        #auth-check {
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            text-align: center;
+        }
+        .auth-check-spinner {
+            width: 44px; height: 44px;
+            border: 3px solid rgba(196,140,93,0.12);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin .85s linear infinite;
+        }
+        .auth-check-text {
+            font-size: .78rem; opacity: .42;
+            letter-spacing: 2px; text-transform: uppercase;
+        }
+
+        /* ─── ЭКРАН ЛОГИНА ──────────────────────────────────── */
+        #login-screen {
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
 
-<!-- ЭКРАН ЛОГИНА -->
+<!-- ═══════════════════════════════════════════════════════════
+     ЭКРАН 1: Проверка сессии (виден ~300мс при загрузке)
+     ════════════════════════════════════════════════════════ -->
+<div id="auth-check">
+    <div class="auth-check-spinner"></div>
+    <p class="auth-check-text">Проверка сессии...</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     ЭКРАН 2: Форма входа
+     ════════════════════════════════════════════════════════ -->
 <div id="login-screen">
-    <div class="admin-box" style="max-width:360px;text-align:center;">
+    <div class="admin-box" style="max-width:360px; text-align:center;">
         <div class="admin-title">Pai Pai Admin</div>
-        <p style="opacity:.44;font-size:.84rem;margin-bottom:18px;">Введите пароль для входа</p>
+        <p style="opacity:.44; font-size:.84rem; margin-bottom:18px;">Введите пароль для входа</p>
         <input type="password" id="admin-pass" placeholder="Пароль">
-        <button class="btn-sm" id="login-btn" style="margin-top:12px;height:48px;" onclick="adminLogin()">Войти</button>
-        <p id="login-error" style="color:#e74c3c;font-size:.78rem;margin-top:10px;min-height:1em;"></p>
+        <button class="btn-sm" id="login-btn" style="margin-top:12px; height:48px;" onclick="adminLogin()">
+            Войти
+        </button>
+        <p id="login-error" style="color:#e74c3c; font-size:.78rem; margin-top:10px; min-height:1.2em;"></p>
     </div>
 </div>
 
-<!-- ПАНЕЛЬ УПРАВЛЕНИЯ -->
+<!-- ═══════════════════════════════════════════════════════════
+     ЭКРАН 3: Панель управления (только для авторизованных)
+     ════════════════════════════════════════════════════════ -->
 <div id="admin-content">
     <div class="admin-box">
 
         <!-- Шапка -->
         <div class="admin-header-row">
-            <a href="index.html" class="admin-back"><i class="fas fa-arrow-left"></i> На сайт</a>
-            <button class="admin-logout" onclick="adminLogout()">Выйти</button>
+            <a href="index.html" class="admin-back">
+                <i class="fas fa-arrow-left"></i> На сайт
+            </a>
+            <button class="admin-logout" onclick="adminLogout()">
+                <i class="fas fa-sign-out-alt" style="margin-right:4px;"></i>Выйти
+            </button>
         </div>
 
         <!-- ФОРМА ДОБАВЛЕНИЯ / РЕДАКТИРОВАНИЯ -->
-        <h3 id="form-title" style="font-size:1.1rem;margin-bottom:14px;">➕ Новое блюдо</h3>
+        <h3 id="form-title" style="font-size:1.1rem; margin-bottom:14px;">➕ Новое блюдо</h3>
 
         <input type="text"   id="p-name"  placeholder="Название *">
         <input type="number" id="p-price" placeholder="Цена (₸) *">
@@ -91,13 +148,17 @@
         </label>
 
         <div class="admin-btn-row">
-            <button class="btn-sm" id="add-btn" onclick="saveProduct()" style="flex:1;">Опубликовать</button>
-            <button class="btn-cancel" id="cancel-btn" style="display:none;" onclick="resetForm()">Отмена</button>
+            <button class="btn-sm" id="add-btn" onclick="saveProduct()" style="flex:1;">
+                Опубликовать
+            </button>
+            <button class="btn-cancel" id="cancel-btn" style="display:none;" onclick="resetForm()">
+                Отмена
+            </button>
         </div>
 
         <!-- СПИСОК ТОВАРОВ -->
         <hr class="admin-divider">
-        <h3 style="font-size:.98rem;color:var(--primary);margin-bottom:10px;">Список меню</h3>
+        <h3 style="font-size:.98rem; color:var(--primary); margin-bottom:10px;">Список меню</h3>
 
         <div class="admin-filters">
             <input type="text" id="admin-search" placeholder="🔍 Поиск..." oninput="fetchList()">
@@ -127,10 +188,13 @@
     </div>
 </div>
 
-<!-- Toast -->
+<!-- Toast-уведомление -->
 <div id="admin-toast"></div>
 
-<!-- FIREBASE -->
+<!-- ═══════════════════════════════════════════════════════════
+     FIREBASE CDN v8 (compat) — не менять на v9!
+     Версия v8 работает со всеми нашими ключами без изменений.
+     ════════════════════════════════════════════════════════ -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -139,11 +203,96 @@
 <script>
 'use strict';
 
+/* ══════════════════════════════════════════════════════════
+   КОНСТАНТЫ
+   ══════════════════════════════════════════════════════════ */
 const IMGBB_KEY   = '19b2ea0cacae4c9328806e4c678db140';
 const ADMIN_EMAIL = 'admin@paipai.kz';
-let editId = null;
 
-/* ── ЛОГИН ─────────────────────────────────────────────── */
+let editId          = null;   // ID редактируемого товара
+let dbListenerRef   = null;   // Ссылка на Firebase listener (для отписки)
+
+/* ══════════════════════════════════════════════════════════
+   ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ВИДИМОСТИ
+   ══════════════════════════════════════════════════════════ */
+
+// Показать экран проверки сессии
+function showAuthCheck() {
+    document.getElementById('auth-check').style.display    = 'flex';
+    document.getElementById('login-screen').style.display  = 'none';
+    document.getElementById('admin-content').style.display = 'none';
+}
+
+// Показать экран логина
+function showLoginScreen() {
+    document.getElementById('auth-check').style.display    = 'none';
+    document.getElementById('login-screen').style.display  = 'flex';
+    document.getElementById('admin-content').style.display = 'none';
+}
+
+// Показать панель управления
+function showAdminPanel() {
+    document.getElementById('auth-check').style.display    = 'none';
+    document.getElementById('login-screen').style.display  = 'none';
+    document.getElementById('admin-content').style.display = 'block';
+    fetchList();
+}
+
+/* ══════════════════════════════════════════════════════════
+   ИНИЦИАЛИЗАЦИЯ АВТОРИЗАЦИИ
+   ══════════════════════════════════════════════════════════
+
+   КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ БАГА:
+
+   Причина бага: Firebase по умолчанию использует LOCAL persistence
+   (хранит сессию в IndexedDB навсегда). После первого входа
+   onAuthStateChanged срабатывал с сохранённым пользователем
+   и сразу показывал панель управления без запроса пароля.
+
+   Решение: SESSION persistence — сессия живёт только пока
+   открыта вкладка браузера. Закрыл вкладку → сессия удалена.
+   ══════════════════════════════════════════════════════════ */
+
+// Шаг 1: сразу показываем спиннер "Проверка сессии..."
+showAuthCheck();
+
+// Шаг 2: меняем persistence ДО того, как слушаем состояние
+firebase.auth()
+    .setPersistence(firebase.auth.Auth.Persistence.SESSION)
+    .then(() => {
+        /*
+         * Шаг 3: Подписываемся на изменения состояния авторизации.
+         * onAuthStateChanged срабатывает:
+         *   — сразу при загрузке страницы (проверяет сессию)
+         *   — при входе / выходе
+         *
+         * ВАЖНО: только этот слушатель управляет тем, что видит
+         * пользователь. Никаких других вызовов showAdminPanel()
+         * вне этого callback (кроме прямого вызова из adminLogin).
+         */
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                // Сессия найдена — показываем панель
+                showAdminPanel();
+            } else {
+                // Сессии нет — показываем форму входа
+                showLoginScreen();
+            }
+        });
+    })
+    .catch(err => {
+        // В редких случаях setPersistence может упасть (e.g. приватный режим)
+        // Graceful fallback: просто показываем логин
+        console.warn('setPersistence failed:', err);
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) { showAdminPanel(); }
+            else      { showLoginScreen(); }
+        });
+    });
+
+/* ══════════════════════════════════════════════════════════
+   ЛОГИН
+   ══════════════════════════════════════════════════════════ */
 async function adminLogin() {
     const pass  = document.getElementById('admin-pass').value.trim();
     const errEl = document.getElementById('login-error');
@@ -152,59 +301,77 @@ async function adminLogin() {
     errEl.textContent = '';
     if (!pass) { errEl.textContent = 'Введите пароль.'; return; }
 
-    btn.disabled = true; btn.textContent = 'Вход...';
+    btn.disabled    = true;
+    btn.textContent = 'Вход...';
 
     try {
+        // signInWithEmailAndPassword триггерит onAuthStateChanged выше,
+        // который сам вызовет showAdminPanel(). Поэтому здесь ничего больше не нужно.
         await firebase.auth().signInWithEmailAndPassword(ADMIN_EMAIL, pass);
-        showAdminPanel();
-    } catch(e) {
+
+    } catch (e) {
         const msgs = {
             'auth/wrong-password':         '❌ Неверный пароль.',
             'auth/user-not-found':         '❌ Пользователь не найден.',
             'auth/invalid-credential':     '❌ Неверный логин или пароль.',
-            'auth/too-many-requests':      '⏳ Много попыток. Подождите.',
+            'auth/too-many-requests':      '⏳ Слишком много попыток. Подождите.',
             'auth/network-request-failed': '🌐 Нет соединения с интернетом.',
         };
-        errEl.textContent = msgs[e.code] || 'Ошибка: ' + e.message;
+        errEl.textContent = msgs[e.code] || ('Ошибка: ' + e.message);
+
     } finally {
-        btn.disabled = false; btn.textContent = 'Войти';
+        btn.disabled    = false;
+        btn.textContent = 'Войти';
     }
 }
 
+/* ══════════════════════════════════════════════════════════
+   ВЫХОД
+   ══════════════════════════════════════════════════════════ */
 function adminLogout() {
-    firebase.auth().signOut().then(() => location.reload());
+    // Отписываемся от Firebase listener если был
+    if (dbListenerRef) {
+        dbListenerRef.off();
+        dbListenerRef = null;
+    }
+    firebase.auth().signOut().then(() => {
+        // После выхода onAuthStateChanged сам вызовет showLoginScreen()
+        document.getElementById('admin-pass').value = '';
+    });
 }
-
-function showAdminPanel() {
-    document.getElementById('login-screen').style.display  = 'none';
-    document.getElementById('admin-content').style.display = 'block';
-    fetchList();
-}
-
-/* Автоматический вход если сессия активна */
-firebase.auth().onAuthStateChanged(user => {
-    if (user) showAdminPanel();
-});
 
 /* Enter в поле пароля */
 document.getElementById('admin-pass').addEventListener('keydown', e => {
     if (e.key === 'Enter') adminLogin();
 });
 
-/* ── ПРЕВЬЮ ФОТО ───────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   ПРЕВЬЮ ФОТО
+   ══════════════════════════════════════════════════════════ */
 function showPreview(input) {
     if (!input.files?.[0]) return;
-    const r = new FileReader();
-    r.onload = (e) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
         const img = document.getElementById('img-preview');
-        img.src = e.target.result; img.style.display = 'block';
+        img.src = e.target.result;
+        img.style.display = 'block';
         document.getElementById('upload-label').style.display = 'none';
     };
-    r.readAsDataURL(input.files[0]);
+    reader.readAsDataURL(input.files[0]);
 }
 
-/* ── СОХРАНИТЬ ТОВАР ───────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   СОХРАНИТЬ ТОВАР (Добавить / Обновить)
+   ══════════════════════════════════════════════════════════ */
 async function saveProduct() {
+    // Проверяем, что пользователь всё ещё авторизован
+    const currentUser = firebase.auth().currentUser;
+    if (!currentUser) {
+        alert('Сессия истекла. Пожалуйста, войдите снова.');
+        showLoginScreen();
+        return;
+    }
+
     if (!navigator.onLine) { alert('❌ Нет интернета!'); return; }
 
     const btn       = document.getElementById('add-btn');
@@ -212,27 +379,32 @@ async function saveProduct() {
     const name      = document.getElementById('p-name').value.trim();
     const price     = parseInt(document.getElementById('p-price').value, 10);
 
-    if (!name || !price) { alert('Заполните название и цену!'); return; }
+    if (!name || !price || price <= 0) { alert('Заполните название и цену!'); return; }
     if (!editId && !fileInput.files[0]) { alert('Выберите фото!'); return; }
 
-    btn.disabled = true; btn.textContent = '⏳ Загружаем...';
+    btn.disabled    = true;
+    btn.textContent = '⏳ Загружаем...';
 
     try {
         let imgUrl = null;
 
-        // 1. ImgBB
+        // 1. Загрузка фото на ImgBB
         if (fileInput.files[0]) {
             const fd = new FormData();
             fd.append('image', fileInput.files[0]);
-            const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method:'POST', body:fd });
+
+            const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
+                method: 'POST', body: fd,
+            });
             const data = await res.json();
-            if (!data.success) throw new Error('ImgBB: ' + (data.error?.message || 'ошибка'));
+            if (!data.success) throw new Error('ImgBB: ' + (data.error?.message || 'ошибка загрузки'));
             imgUrl = data.data.url;
         }
 
-        // 2. Данные
+        // 2. Объект товара (структура НЕ меняется — совместимость с БД)
         const product = {
-            name, price,
+            name,
+            price,
             desc:  document.getElementById('p-desc').value.trim()  || '',
             count: document.getElementById('p-count').value.trim() || '',
             cat:   document.getElementById('p-cat').value,
@@ -241,72 +413,97 @@ async function saveProduct() {
         };
         if (imgUrl) product.img = imgUrl;
 
-        // 3. Firebase
-        const ref = editId ? database.ref('products/' + editId) : database.ref('products').push();
+        // 3. Запись в Firebase
+        const ref = editId
+            ? database.ref('products/' + editId)
+            : database.ref('products').push();
         await ref.set(product);
 
         showToast(editId ? '✅ Обновлено!' : '✅ Добавлено!');
         resetForm();
 
-    } catch(err) {
-        console.error(err);
+    } catch (err) {
+        console.error('saveProduct:', err);
         alert('⚠️ Ошибка: ' + err.message);
+
     } finally {
-        btn.disabled = false;
+        btn.disabled    = false;
         btn.textContent = editId ? 'Сохранить изменения' : 'Опубликовать';
     }
 }
 
-/* ── СПИСОК ТОВАРОВ ────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   СПИСОК ТОВАРОВ (real-time listener)
+   ══════════════════════════════════════════════════════════ */
 function fetchList() {
-    database.ref('products').on('value', snap => {
+    // Отписываемся от предыдущего listener (если был),
+    // чтобы не создавать дублирующиеся подписки
+    if (dbListenerRef) {
+        dbListenerRef.off();
+    }
+
+    dbListenerRef = database.ref('products');
+
+    dbListenerRef.on('value', snap => {
         const container = document.getElementById('product-list');
         if (!container) return;
 
-        const q      = (document.getElementById('admin-search')?.value || '').toLowerCase();
-        const catF   = document.getElementById('admin-filter-cat')?.value || 'all';
-        const data   = snap.val();
+        const q    = (document.getElementById('admin-search')?.value || '').toLowerCase();
+        const catF = document.getElementById('admin-filter-cat')?.value || 'all';
+        const data = snap.val();
 
-        if (!data) { container.innerHTML = '<p class="admin-empty">Список пуст</p>'; return; }
+        if (!data) {
+            container.innerHTML = '<p class="admin-empty">Список пуст</p>';
+            return;
+        }
 
         const keys = Object.keys(data).reverse().filter(id => {
-            const p = data[id];
-            const matchName = (p.name || '').toLowerCase().includes(q);
-            const matchCat  = catF === 'all' || p.cat === catF || p.category === catF;
-            return matchName && matchCat;
+            const p       = data[id];
+            const nameOk  = (p.name || '').toLowerCase().includes(q);
+            const catOk   = catF === 'all' || p.cat === catF || p.category === catF;
+            return nameOk && catOk;
         });
 
-        if (!keys.length) { container.innerHTML = '<p class="admin-empty">Ничего не найдено</p>'; return; }
+        if (!keys.length) {
+            container.innerHTML = '<p class="admin-empty">Ничего не найдено</p>';
+            return;
+        }
 
         container.innerHTML = keys.map(id => {
-            const p = data[id];
+            const p      = data[id];
             const isStop = p.available === false;
             return `
             <div class="list-item">
                 <img class="list-thumb" src="${p.img || ''}" alt=""
                      onerror="this.style.display='none'">
                 <div class="list-info">
-                    <span class="list-name ${isStop ? 'unavail' : ''}">${p.name}</span>
+                    <span class="list-name ${isStop ? 'unavail' : ''}">${escHtml(p.name)}</span>
                     <span class="list-meta">${p.price} ₸ · ${p.cat || p.category || '—'}</span>
                 </div>
                 <div class="list-controls">
-                    <button class="list-btn btn-edit"   onclick="editItem('${id}')">Ред.</button>
+                    <button class="list-btn btn-edit"
+                            onclick="editItem('${id}')">Ред.</button>
                     <button class="list-btn ${isStop ? 'btn-toggle-ret' : 'btn-toggle-stop'}"
-                            onclick="toggleStock('${id}',${isStop})">
+                            onclick="toggleStock('${id}', ${isStop})">
                         ${isStop ? 'Вернуть' : 'Стоп'}
                     </button>
-                    <button class="list-btn btn-delete" onclick="deleteItem('${id}')">✕</button>
+                    <button class="list-btn btn-delete"
+                            onclick="deleteItem('${id}')">✕</button>
                 </div>
             </div>`;
         }).join('');
     });
 }
 
-/* ── РЕДАКТИРОВАТЬ ─────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   РЕДАКТИРОВАТЬ ТОВАР
+   ══════════════════════════════════════════════════════════ */
 function editItem(id) {
     database.ref('products/' + id).once('value', snap => {
-        const p = snap.val(); if (!p) return;
+        const p = snap.val();
+        if (!p) return;
         editId = id;
+
         setVal('p-name',        p.name  || '');
         setVal('p-price',       p.price || '');
         setVal('p-desc',        p.desc  || '');
@@ -314,48 +511,84 @@ function editItem(id) {
         setVal('p-cat',         p.cat || p.category || 'first');
         setVal('p-type',        p.type  || '');
         setVal('product-badge', p.badge || '');
-        document.getElementById('form-title').textContent = '✏️ Редактирование';
-        document.getElementById('add-btn').textContent = 'Сохранить изменения';
-        document.getElementById('cancel-btn').style.display = 'block';
-        window.scrollTo({ top:0, behavior:'smooth' });
+
+        document.getElementById('form-title').textContent       = '✏️ Редактирование';
+        document.getElementById('add-btn').textContent          = 'Сохранить изменения';
+        document.getElementById('cancel-btn').style.display     = 'block';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 }
 
-/* ── СБРОС ФОРМЫ ───────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   СБРОС ФОРМЫ
+   ══════════════════════════════════════════════════════════ */
 function resetForm() {
     editId = null;
-    ['p-name','p-price','p-desc','p-count'].forEach(id => setVal(id, ''));
-    setVal('p-cat','first'); setVal('p-type',''); setVal('product-badge','');
-    document.getElementById('p-file').value = '';
-    const prev = document.getElementById('img-preview');
-    prev.style.display = 'none'; prev.src = '';
-    document.getElementById('upload-label').style.display = 'block';
-    document.getElementById('form-title').textContent = '➕ Новое блюдо';
-    document.getElementById('add-btn').textContent = 'Опубликовать';
-    document.getElementById('cancel-btn').style.display = 'none';
+    ['p-name', 'p-price', 'p-desc', 'p-count'].forEach(id => setVal(id, ''));
+    setVal('p-cat',         'first');
+    setVal('p-type',        '');
+    setVal('product-badge', '');
+
+    const fileInput = document.getElementById('p-file');
+    const preview   = document.getElementById('img-preview');
+    const label     = document.getElementById('upload-label');
+
+    if (fileInput) fileInput.value = '';
+    if (preview)   { preview.style.display = 'none'; preview.src = ''; }
+    if (label)     label.style.display = 'block';
+
+    document.getElementById('form-title').textContent       = '➕ Новое блюдо';
+    document.getElementById('add-btn').textContent          = 'Опубликовать';
+    document.getElementById('cancel-btn').style.display     = 'none';
 }
 
-/* ── ПЕРЕКЛЮЧИТЬ НАЛИЧИЕ ───────────────────────────────── */
-function toggleStock(id, isStop) {
-    database.ref('products/' + id).update({ available: isStop ? true : false });
+/* ══════════════════════════════════════════════════════════
+   ПЕРЕКЛЮЧИТЬ НАЛИЧИЕ
+   ══════════════════════════════════════════════════════════ */
+function toggleStock(id, isCurrentlyUnavailable) {
+    // isCurrentlyUnavailable=true → блюдо было "Стоп" → возвращаем (available:true)
+    // isCurrentlyUnavailable=false → блюдо было активно → ставим "Стоп" (available:false)
+    database.ref('products/' + id).update({
+        available: isCurrentlyUnavailable ? true : false,
+    });
 }
 
-/* ── УДАЛИТЬ ───────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   УДАЛИТЬ ТОВАР
+   ══════════════════════════════════════════════════════════ */
 function deleteItem(id) {
-    if (confirm('Удалить это блюдо навсегда?'))
+    if (confirm('Удалить это блюдо навсегда? Это действие нельзя отменить.')) {
         database.ref('products/' + id).remove();
+    }
 }
 
-/* ── УТИЛИТЫ ────────────────────────────────────────────── */
-function setVal(id, v) { const el=document.getElementById(id); if(el) el.value=v; }
+/* ══════════════════════════════════════════════════════════
+   УТИЛИТЫ
+   ══════════════════════════════════════════════════════════ */
+function setVal(id, v) {
+    const el = document.getElementById(id);
+    if (el) el.value = v;
+}
+
+function escHtml(s) {
+    return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
 
 function showToast(msg) {
     const t = document.getElementById('admin-toast');
+    if (!t) return;
     t.textContent = msg;
-    t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)';
+    t.style.opacity   = '1';
+    t.style.transform = 'translateX(-50%) translateY(0)';
     setTimeout(() => {
-        t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(20px)';
-    }, 2600);
+        t.style.opacity   = '0';
+        t.style.transform = 'translateX(-50%) translateY(20px)';
+    }, 2800);
 }
 </script>
 </body>
