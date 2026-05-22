@@ -210,6 +210,7 @@ const IMGBB_KEY   = '19b2ea0cacae4c9328806e4c678db140';
 const ADMIN_EMAIL = 'admin@paipai.kz';
 
 let editId          = null;   // ID редактируемого товара
+let currentImgUrl   = null;   // ← ДОБАВЬ СЮДА: Ссылка на текущую фотку при редактировании
 let dbListenerRef   = null;   // Ссылка на Firebase listener (для отписки)
 
 /* ══════════════════════════════════════════════════════════
@@ -402,6 +403,7 @@ async function saveProduct() {
         }
 
         // 2. Объект товара (структура НЕ меняется — совместимость с БД)
+        // 2. Объект товара (структура НЕ меняется — совместимость с БД)
         const product = {
             name,
             price,
@@ -411,7 +413,13 @@ async function saveProduct() {
             type:  document.getElementById('p-type').value,
             badge: document.getElementById('product-badge').value,
         };
-        if (imgUrl) product.img = imgUrl;
+        
+        // ПРОВЕРКА ФОТКИ: Если загрузили новую — ставим её. Если нет, но мы редактируем — оставляем старую.
+        if (imgUrl) {
+            product.img = imgUrl;
+        } else if (editId && currentImgUrl) {
+            product.img = currentImgUrl;
+        }
 
         // 3. Запись в Firebase
         const ref = editId
@@ -503,6 +511,7 @@ function editItem(id) {
         const p = snap.val();
         if (!p) return;
         editId = id;
+        currentImgUrl = p.img || null; // Запоминаем старую фотку в переменную
 
         setVal('p-name',        p.name  || '');
         setVal('p-price',       p.price || '');
@@ -511,6 +520,18 @@ function editItem(id) {
         setVal('p-cat',         p.cat || p.category || 'first');
         setVal('p-type',        p.type  || '');
         setVal('product-badge', p.badge || '');
+
+        // Показываем текущую фотку товара в поле превью
+        const img = document.getElementById('img-preview');
+        const label = document.getElementById('upload-label');
+        if (p.img) {
+            img.src = p.img;
+            img.style.display = 'block';
+            label.style.display = 'none';
+        } else {
+            img.style.display = 'none';
+            label.style.display = 'block';
+        }
 
         document.getElementById('form-title').textContent       = '✏️ Редактирование';
         document.getElementById('add-btn').textContent          = 'Сохранить изменения';
@@ -525,7 +546,9 @@ function editItem(id) {
    ══════════════════════════════════════════════════════════ */
 function resetForm() {
     editId = null;
+    currentImgUrl = null; // ← ДОБАВЬ СЮДА: Сбрасываем ссылку на фотку
     ['p-name', 'p-price', 'p-desc', 'p-count'].forEach(id => setVal(id, ''));
+    // ... весь остальной код функции оставляешь без изменений ...
     setVal('p-cat',         'first');
     setVal('p-type',        '');
     setVal('product-badge', '');
