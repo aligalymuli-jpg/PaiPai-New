@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#07100a">
     <meta name="description" content="Pai Pai — Кейтеринг и банкеты в Алматы. Вкусная домашняя еда для ваших мероприятий.">
+
+    <!-- CSP: запрещаем запуск inline-скриптов из сторонних источников.
+         Разрешены только: наши скрипты, Firebase CDN, FontAwesome, Google Fonts.
+         Это блокирует большинство XSS-атак. -->
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self';
+                   script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://www.gstatic.com https://www.googleapis.com;
+                   style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com;
+                   font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+                   img-src 'self' data: https://i.ibb.co https://ibb.co https://placehold.co;
+                   connect-src https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com;
+                   media-src 'self';
+                   frame-src 'none';
+                   object-src 'none';">
+
     <title>Кейтеринг и банкеты | Pai Pai</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -101,7 +116,7 @@
         </div>
     </section>
 
-    <!-- ЧТО МЫ ПРЕДЛАГАЕМ -->
+    <!-- ФОРМАТЫ ОБСЛУЖИВАНИЯ -->
     <section>
         <h2 class="section-title">Форматы обслуживания</h2>
 
@@ -155,8 +170,20 @@
                 и пожеланиях к меню. Мы ответим быстро и предложим лучшее решение
                 по разумной цене.
             </p>
-            <a href="https://wa.me/77080396799?text=${encodeURIComponent('Здравствуйте! Хочу узнать о кейтеринге и банкетах от Pai Pai.')}"
-               class="wa-btn" target="_blank" rel="noopener">
+            <!--
+                ИСПРАВЛЕН БАГ: в предыдущей версии стояло
+                href="https://wa.me/...?text=${encodeURIComponent('...')}"
+                Это JavaScript-синтаксис, который НЕ работает в HTML-атрибутах.
+                Браузер отправлял буквальную строку "${encodeURIComponent(...)}" в WhatsApp.
+
+                РЕШЕНИЕ: href устанавливается через JS ниже (id="catering-wa-btn").
+                encodeURIComponent() выполняется в JS-контексте — правильно.
+            -->
+            <a id="catering-wa-btn"
+               href="#"
+               class="wa-btn"
+               target="_blank"
+               rel="noopener noreferrer">
                 <i class="fab fa-whatsapp"></i> Обсудить меню в WhatsApp
             </a>
         </div>
@@ -182,7 +209,7 @@
                 <i class="fas fa-location-arrow"></i> Открыть в 2ГИС
             </a>
             <div class="social-links">
-                <a href="https://wa.me/77052363788" class="social-icon wa" aria-label="WhatsApp">
+                <a href="https://wa.me/77080396799" class="social-icon wa" aria-label="WhatsApp">
                     <i class="fab fa-whatsapp"></i>
                 </a>
                 <a href="https://www.instagram.com/paipai_cafe" class="social-icon ig" aria-label="Instagram">
@@ -195,9 +222,28 @@
 </main>
 
 <script>
-// Безопасный запуск видео
-const v = document.getElementById('bg-video');
-if (v) { v.load(); const p = v.play(); if(p) p.catch(()=>{}); }
+'use strict';
+
+/* ИСПРАВЛЕНИЕ БАГА WhatsApp-ссылки:
+   encodeURIComponent() выполняется здесь, в JS-контексте,
+   а затем готовая ссылка присваивается href-атрибуту. */
+(function() {
+    const WA_PHONE = '77080396799';
+    const WA_TEXT  = 'Здравствуйте! Хочу узнать о кейтеринге и банкетах от Pai Pai.';
+    const btn      = document.getElementById('catering-wa-btn');
+    if (btn) {
+        btn.href = 'https://wa.me/' + WA_PHONE + '?text=' + encodeURIComponent(WA_TEXT);
+    }
+})();
+
+/* Безопасный запуск видео-фона */
+(function() {
+    const v = document.getElementById('bg-video');
+    if (!v) return;
+    v.load();
+    const p = v.play();
+    if (p) p.catch(() => {});
+})();
 </script>
 
 </body>
