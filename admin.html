@@ -3,10 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!--
-        noindex + nofollow: Google не будет индексировать эту страницу.
-        Дополнительная защита: поисковики не найдут URL.
-    -->
     <meta name="robots" content="noindex, nofollow">
     <title>Управление | Pai Pai</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -14,76 +10,154 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Marck+Script&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+
     <style>
-        body { min-height:100vh; padding:20px 16px 60px; }
+        body { min-height: 100vh; padding: 20px 16px 60px; }
 
-        /* ─── ВСЕ ТРИ ЭКРАНА — СКРЫТЫ ПО УМОЛЧАНИЮ ─────────────
-           КРИТИЧЕСКИ ВАЖНО: используем inline style="display:none"
-           а НЕ только CSS-класс. Это предотвращает "мигание"
-           контента до того, как Firebase проверит сессию.
+        /* ── ВСЕ ЭКРАНЫ СКРЫТЫ ПО УМОЛЧАНИЮ ──────────────────────
+           Показываем только нужный через JS после проверки Auth.
+           Это предотвращает мигание/утечку UI до получения токена.
            ──────────────────────────────────────────────────────── */
-        #auth-check  { display:none; }
-        #login-screen { display:none; }
-        #admin-content { display:none; }
+        #screen-check,
+        #screen-login,
+        #screen-denied,
+        #screen-admin  { display: none; }
 
-        /* ─── ЭКРАН ПРОВЕРКИ СЕССИИ ─────────────────────────── */
-        #auth-check {
+        /* ── ЭКРАН ПРОВЕРКИ СЕССИИ ──────────────────────────────── */
+        #screen-check {
             min-height: 100vh;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            flex-direction: column;
             gap: 16px;
             text-align: center;
         }
-        .auth-check-spinner {
+        .check-spinner {
             width: 44px; height: 44px;
-            border: 3px solid rgba(196,140,93,0.12);
+            border: 3px solid rgba(196,140,93,.12);
             border-top-color: var(--primary);
             border-radius: 50%;
             animation: spin .85s linear infinite;
         }
-        .auth-check-text {
-            font-size: .78rem; opacity: .42;
-            letter-spacing: 2px; text-transform: uppercase;
-        }
+        .check-text { font-size:.76rem; opacity:.38; letter-spacing:2.5px; text-transform:uppercase; }
 
-        /* ─── ЭКРАН ЛОГИНА ──────────────────────────────────── */
-        #login-screen {
+        /* ── ЭКРАН ЛОГИНА ────────────────────────────────────────── */
+        #screen-login {
             min-height: 100vh;
             align-items: center;
             justify-content: center;
         }
+
+        /* Кнопка Google (официальный стиль) */
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: #fff;
+            color: #3c4043;
+            border: 1px solid #dadce0;
+            border-radius: 14px;
+            padding: 14px 28px;
+            font-size: .95rem;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            width: 100%;
+            transition: background .18s, box-shadow .18s, transform .14s;
+            letter-spacing: .2px;
+        }
+        .google-btn:hover {
+            background: #f8f9fa;
+            box-shadow: 0 2px 12px rgba(0,0,0,.18);
+        }
+        .google-btn:active { transform: scale(.97); }
+        .google-btn svg { flex-shrink: 0; }
+
+        /* ── ЭКРАН "ДОСТУП ЗАПРЕЩЁН" ─────────────────────────────── */
+        #screen-denied {
+            min-height: 100vh;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+            gap: 16px;
+        }
+        .denied-icon { font-size: 3.5rem; color: #e74c3c; }
+        .denied-title { font-size: 1.4rem; font-weight: 700; color: #e74c3c; }
+        .denied-email {
+            font-size: .80rem; opacity: .50;
+            background: rgba(231,76,60,.08);
+            border: 1px solid rgba(231,76,60,.20);
+            padding: 8px 16px; border-radius: 8px;
+        }
+        .denied-logout {
+            margin-top: 8px;
+            background: none; border: 1px solid rgba(255,255,255,.18);
+            color: rgba(237,233,224,.65); padding: 11px 24px;
+            border-radius: 12px; cursor: pointer; font-size: .84rem;
+            font-family: 'Montserrat', sans-serif;
+            transition: border-color .2s, color .2s;
+        }
+        .denied-logout:hover { border-color: rgba(255,255,255,.35); color: #ede9e0; }
     </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════════
-     ЭКРАН 1: Проверка сессии (виден ~300мс при загрузке)
+<!-- ════════════════════════════════════════════════════════════
+     ЭКРАН 1: Проверка сессии (~200мс при загрузке)
      ════════════════════════════════════════════════════════ -->
-<div id="auth-check">
-    <div class="auth-check-spinner"></div>
-    <p class="auth-check-text">Проверка сессии...</p>
+<div id="screen-check">
+    <div class="check-spinner"></div>
+    <p class="check-text">Проверка сессии...</p>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     ЭКРАН 2: Форма входа
+<!-- ════════════════════════════════════════════════════════════
+     ЭКРАН 2: Вход через Google
      ════════════════════════════════════════════════════════ -->
-<div id="login-screen">
-    <div class="admin-box" style="max-width:360px; text-align:center;">
+<div id="screen-login">
+    <div class="admin-box" style="max-width:380px; text-align:center;">
         <div class="admin-title">Pai Pai Admin</div>
-        <p style="opacity:.44; font-size:.84rem; margin-bottom:18px;">Введите пароль для входа</p>
-        <input type="password" id="admin-pass" placeholder="Пароль">
-        <button class="btn-sm" id="login-btn" style="margin-top:12px; height:48px;" onclick="adminLogin()">
-            Войти
+        <p style="opacity:.44; font-size:.84rem; margin-bottom:26px; line-height:1.6;">
+            Войдите с помощью своего аккаунта Google.<br>
+            Доступ разрешён только владельцу.
+        </p>
+
+        <button class="google-btn" onclick="signInWithGoogle()" id="google-sign-in-btn">
+            <!-- Официальная иконка Google -->
+            <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Войти через Google
         </button>
-        <p id="login-error" style="color:#e74c3c; font-size:.78rem; margin-top:10px; min-height:1.2em;"></p>
+
+        <p id="login-error" style="color:#e74c3c; font-size:.78rem; margin-top:14px; min-height:1.2em;"></p>
     </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     ЭКРАН 3: Панель управления (только для авторизованных)
+<!-- ════════════════════════════════════════════════════════════
+     ЭКРАН 3: Доступ запрещён (чужой Google-аккаунт)
      ════════════════════════════════════════════════════════ -->
-<div id="admin-content">
+<div id="screen-denied">
+    <i class="fas fa-shield-alt denied-icon"></i>
+    <div class="denied-title">Доступ запрещён</div>
+    <p style="opacity:.55; font-size:.88rem; max-width:300px; line-height:1.6;">
+        Этот аккаунт Google не является владельцем панели управления.
+    </p>
+    <div class="denied-email" id="denied-email-info"></div>
+    <button class="denied-logout" onclick="signOut()">
+        <i class="fas fa-sign-out-alt" style="margin-right:6px;"></i>Выйти и войти с другим аккаунтом
+    </button>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     ЭКРАН 4: Панель управления (только авторизованный владелец)
+     ════════════════════════════════════════════════════════ -->
+<div id="screen-admin">
     <div class="admin-box">
 
         <!-- Шапка -->
@@ -91,7 +165,8 @@
             <a href="index.html" class="admin-back">
                 <i class="fas fa-arrow-left"></i> На сайт
             </a>
-            <button class="admin-logout" onclick="adminLogout()">
+            <div id="admin-user-info" style="font-size:.76rem; opacity:.50; display:flex; align-items:center; gap:8px;"></div>
+            <button class="admin-logout" onclick="signOut()">
                 <i class="fas fa-sign-out-alt" style="margin-right:4px;"></i>Выйти
             </button>
         </div>
@@ -191,9 +266,9 @@
 <!-- Toast-уведомление -->
 <div id="admin-toast"></div>
 
-<!-- ═══════════════════════════════════════════════════════════
-     FIREBASE CDN v8 (compat) — не менять на v9!
-     Версия v8 работает со всеми нашими ключами без изменений.
+<!-- ════════════════════════════════════════════════════════════
+     FIREBASE CDN v8 — добавляем firebase-auth (уже есть) и
+     обязательно подключаем firebase-auth для Google Provider
      ════════════════════════════════════════════════════════ -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -203,155 +278,178 @@
 <script>
 'use strict';
 
-/* ══════════════════════════════════════════════════════════
-   КОНСТАНТЫ
-   ══════════════════════════════════════════════════════════ */
-const IMGBB_KEY   = '19b2ea0cacae4c9328806e4c678db140';
-const ADMIN_EMAIL = 'admin@paipai.kz';
+/* ════════════════════════════════════════════════════════════
+   ⚠️  ВАЖНО: ЗАМЕНИ НА СВОИ ДАННЫЕ  ⚠️
 
-let editId          = null;   // ID редактируемого товара
-let dbListenerRef   = null;   // Ссылка на Firebase listener (для отписки)
+   ALLOWED_UIDS — массив UID Google-аккаунтов, которым
+   разрешён доступ. Можно добавить несколько.
 
-/* ══════════════════════════════════════════════════════════
-   ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ВИДИМОСТИ
-   ══════════════════════════════════════════════════════════ */
+   КАК НАЙТИ UID:
+   1. Открой Firebase Console → Authentication → Users
+   2. Войди на этой странице через Google (кнопка ниже)
+   3. В таблице появится строка — скопируй User UID
+   4. Вставь вместо 'ЗАМЕНИ_НА_ТВОЙ_GOOGLE_UID'
 
-// Показать экран проверки сессии
-function showAuthCheck() {
-    document.getElementById('auth-check').style.display    = 'flex';
-    document.getElementById('login-screen').style.display  = 'none';
-    document.getElementById('admin-content').style.display = 'none';
+   ALLOWED_EMAILS — дополнительная проверка по email
+   (защита от ошибки при вводе UID).
+   ════════════════════════════════════════════════════════ */
+const ALLOWED_UIDS   = [
+    'fa2UQBrP8Ka2eyMupvXCR9xHv6A2',           // твой основной аккаунт
+    // 'UID_ВТОРОГО_АДМИНИСТРАТОРА',       // второй аккаунт если нужен
+];
+
+const ALLOWED_EMAILS = [
+    'aligalymuli@gmail.com',                // твой Gmail
+    // 'второй_email@gmail.com',
+];
+
+const IMGBB_KEY  = '19b2ea0cacae4c9328806e4c678db140';
+
+/* ────────────────────────────────────────────────────────────
+   Дополнительные переменные состояния
+   ──────────────────────────────────────────────────────── */
+let editId         = null;
+let currentImgUrl  = null;   // URL фото при редактировании
+let dbListenerRef  = null;
+
+/* ════════════════════════════════════════════════════════════
+   ФУНКЦИИ ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ
+   ════════════════════════════════════════════════════════ */
+function showScreen(name) {
+    ['check','login','denied','admin'].forEach(s => {
+        const el = document.getElementById('screen-' + s);
+        if (el) el.style.display = 'none';
+    });
+    const target = document.getElementById('screen-' + name);
+    if (target) target.style.display = (name === 'check' || name === 'denied') ? 'flex' : (name === 'login' ? 'flex' : 'block');
 }
 
-// Показать экран логина
-function showLoginScreen() {
-    document.getElementById('auth-check').style.display    = 'none';
-    document.getElementById('login-screen').style.display  = 'flex';
-    document.getElementById('admin-content').style.display = 'none';
-}
-
-// Показать панель управления
-function showAdminPanel() {
-    document.getElementById('auth-check').style.display    = 'none';
-    document.getElementById('login-screen').style.display  = 'none';
-    document.getElementById('admin-content').style.display = 'block';
-    fetchList();
-}
-
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════
    ИНИЦИАЛИЗАЦИЯ АВТОРИЗАЦИИ
-   ══════════════════════════════════════════════════════════
 
-   КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ БАГА:
+   Архитектура защиты:
+   1. SESSION persistence — сессия живёт только пока открыта вкладка
+   2. onAuthStateChanged — единственная точка показа UI
+   3. Двойная проверка: UID + Email — если оба не совпали, доступ закрыт
+   4. Немедленный signOut при несанкционированном входе
+   ════════════════════════════════════════════════════════ */
+showScreen('check');
 
-   Причина бага: Firebase по умолчанию использует LOCAL persistence
-   (хранит сессию в IndexedDB навсегда). После первого входа
-   onAuthStateChanged срабатывал с сохранённым пользователем
-   и сразу показывал панель управления без запроса пароля.
-
-   Решение: SESSION persistence — сессия живёт только пока
-   открыта вкладка браузера. Закрыл вкладку → сессия удалена.
-   ══════════════════════════════════════════════════════════ */
-
-// Шаг 1: сразу показываем спиннер "Проверка сессии..."
-showAuthCheck();
-
-// Шаг 2: меняем persistence ДО того, как слушаем состояние
 firebase.auth()
     .setPersistence(firebase.auth.Auth.Persistence.SESSION)
     .then(() => {
-        /*
-         * Шаг 3: Подписываемся на изменения состояния авторизации.
-         * onAuthStateChanged срабатывает:
-         *   — сразу при загрузке страницы (проверяет сессию)
-         *   — при входе / выходе
-         *
-         * ВАЖНО: только этот слушатель управляет тем, что видит
-         * пользователь. Никаких других вызовов showAdminPanel()
-         * вне этого callback (кроме прямого вызова из adminLogin).
-         */
         firebase.auth().onAuthStateChanged(user => {
-            if (user) {
-                // Сессия найдена — показываем панель
-                showAdminPanel();
+            if (!user) {
+                /* Пользователь не вошёл */
+                showScreen('login');
+                return;
+            }
+
+            /* Двойная проверка: UID И email должны быть в whitelist */
+            const uidOk   = ALLOWED_UIDS.includes(user.uid);
+            const emailOk = ALLOWED_EMAILS.includes(user.email);
+
+            if (uidOk && emailOk) {
+                /* Доступ разрешён */
+                showScreen('admin');
+                const infoEl = document.getElementById('admin-user-info');
+                if (infoEl) {
+                    infoEl.innerHTML =
+                        (user.photoURL
+                            ? `<img src="${user.photoURL}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;">`
+                            : `<i class="fas fa-user-circle"></i>`) +
+                        `<span>${user.displayName || user.email}</span>`;
+                }
+                fetchList();
             } else {
-                // Сессии нет — показываем форму входа
-                showLoginScreen();
+                /* Чужой Google-аккаунт — немедленно выгоняем */
+                firebase.auth().signOut().then(() => {
+                    const infoEl = document.getElementById('denied-email-info');
+                    if (infoEl) infoEl.textContent = user.email || user.uid;
+                    showScreen('denied');
+                });
             }
         });
     })
     .catch(err => {
-        // В редких случаях setPersistence может упасть (e.g. приватный режим)
-        // Graceful fallback: просто показываем логин
-        console.warn('setPersistence failed:', err);
+        /* setPersistence упала (приватный режим Safari и т.п.) — graceful fallback */
+        console.warn('setPersistence:', err);
         firebase.auth().onAuthStateChanged(user => {
-            if (user) { showAdminPanel(); }
-            else      { showLoginScreen(); }
+            if (!user) { showScreen('login'); return; }
+            const ok = ALLOWED_UIDS.includes(user.uid) && ALLOWED_EMAILS.includes(user.email);
+            if (ok) {
+                showScreen('admin');
+                fetchList();
+            } else {
+                firebase.auth().signOut().then(() => {
+                    const el = document.getElementById('denied-email-info');
+                    if (el) el.textContent = user.email || user.uid;
+                    showScreen('denied');
+                });
+            }
         });
     });
 
-/* ══════════════════════════════════════════════════════════
-   ЛОГИН
-   ══════════════════════════════════════════════════════════ */
-async function adminLogin() {
-    const pass  = document.getElementById('admin-pass').value.trim();
-    const errEl = document.getElementById('login-error');
-    const btn   = document.getElementById('login-btn');
-
+/* ════════════════════════════════════════════════════════════
+   GOOGLE SIGN-IN
+   ════════════════════════════════════════════════════════ */
+async function signInWithGoogle() {
+    const btn    = document.getElementById('google-sign-in-btn');
+    const errEl  = document.getElementById('login-error');
     errEl.textContent = '';
-    if (!pass) { errEl.textContent = 'Введите пароль.'; return; }
 
     btn.disabled    = true;
-    btn.textContent = 'Вход...';
+    btn.innerHTML   = '<div class="check-spinner" style="width:20px;height:20px;border-width:2px;margin:0;"></div> Открываем Google...';
 
     try {
-        // signInWithEmailAndPassword триггерит onAuthStateChanged выше,
-        // который сам вызовет showAdminPanel(). Поэтому здесь ничего больше не нужно.
-        await firebase.auth().signInWithEmailAndPassword(ADMIN_EMAIL, pass);
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        /*
+         * Параметры провайдера:
+         * - prompt: 'select_account' — всегда показывает выбор аккаунта,
+         *   даже если в браузере уже залогинен один аккаунт.
+         *   Это важно: без этого параметра Google автоматически
+         *   войдёт с первым аккаунтом в браузере, минуя выбор.
+         */
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        /*
+         * signInWithPopup — открывает всплывающее окно Google.
+         * onAuthStateChanged выше сам разберётся что делать после входа.
+         */
+        await firebase.auth().signInWithPopup(provider);
 
     } catch (e) {
         const msgs = {
-            'auth/wrong-password':         '❌ Неверный пароль.',
-            'auth/user-not-found':         '❌ Пользователь не найден.',
-            'auth/invalid-credential':     '❌ Неверный логин или пароль.',
-            'auth/too-many-requests':      '⏳ Слишком много попыток. Подождите.',
-            'auth/network-request-failed': '🌐 Нет соединения с интернетом.',
+            'auth/popup-closed-by-user':       'Окно входа закрыто. Попробуйте снова.',
+            'auth/popup-blocked':              'Браузер заблокировал всплывающее окно. Разрешите popup для этого сайта.',
+            'auth/cancelled-popup-request':    'Запрос отменён.',
+            'auth/network-request-failed':     '🌐 Нет соединения с интернетом.',
+            'auth/unauthorized-domain':        '⚠️ Домен не добавлен в Authorized domains. Инструкция в README.',
         };
         errEl.textContent = msgs[e.code] || ('Ошибка: ' + e.message);
 
-    } finally {
-        btn.disabled    = false;
-        btn.textContent = 'Войти';
+        btn.disabled  = false;
+        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg> Войти через Google';
     }
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════
    ВЫХОД
-   ══════════════════════════════════════════════════════════ */
-function adminLogout() {
-    // Отписываемся от Firebase listener если был
-    if (dbListenerRef) {
-        dbListenerRef.off();
-        dbListenerRef = null;
-    }
-    firebase.auth().signOut().then(() => {
-        // После выхода onAuthStateChanged сам вызовет showLoginScreen()
-        document.getElementById('admin-pass').value = '';
-    });
+   ════════════════════════════════════════════════════════ */
+function signOut() {
+    if (dbListenerRef) { dbListenerRef.off(); dbListenerRef = null; }
+    firebase.auth().signOut();
+    /* onAuthStateChanged автоматически вызовет showScreen('login') */
 }
 
-/* Enter в поле пароля */
-document.getElementById('admin-pass').addEventListener('keydown', e => {
-    if (e.key === 'Enter') adminLogin();
-});
-
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════
    ПРЕВЬЮ ФОТО
-   ══════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════ */
 function showPreview(input) {
     if (!input.files?.[0]) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
         const img = document.getElementById('img-preview');
         img.src = e.target.result;
         img.style.display = 'block';
@@ -360,15 +458,15 @@ function showPreview(input) {
     reader.readAsDataURL(input.files[0]);
 }
 
-/* ══════════════════════════════════════════════════════════
-   СОХРАНИТЬ ТОВАР (Добавить / Обновить)
-   ══════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   СОХРАНИТЬ ТОВАР
+   ════════════════════════════════════════════════════════ */
 async function saveProduct() {
-    // Проверяем, что пользователь всё ещё авторизован
-    const currentUser = firebase.auth().currentUser;
-    if (!currentUser) {
-        alert('Сессия истекла. Пожалуйста, войдите снова.');
-        showLoginScreen();
+    /* Перепроверяем авторизацию перед каждой записью */
+    const user = firebase.auth().currentUser;
+    if (!user || !ALLOWED_UIDS.includes(user.uid)) {
+        alert('Сессия истекла. Войдите снова.');
+        showScreen('login');
         return;
     }
 
@@ -388,20 +486,17 @@ async function saveProduct() {
     try {
         let imgUrl = null;
 
-        // 1. Загрузка фото на ImgBB
+        /* 1. ImgBB */
         if (fileInput.files[0]) {
             const fd = new FormData();
             fd.append('image', fileInput.files[0]);
-
-            const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, {
-                method: 'POST', body: fd,
-            });
+            const res  = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_KEY}`, { method:'POST', body:fd });
             const data = await res.json();
             if (!data.success) throw new Error('ImgBB: ' + (data.error?.message || 'ошибка загрузки'));
             imgUrl = data.data.url;
         }
 
-        // 2. Объект товара (структура НЕ меняется — совместимость с БД)
+        /* 2. Объект товара (структура не меняется — совместимость с БД) */
         const product = {
             name,
             price,
@@ -411,9 +506,12 @@ async function saveProduct() {
             type:  document.getElementById('p-type').value,
             badge: document.getElementById('product-badge').value,
         };
-        if (imgUrl) product.img = imgUrl;
 
-        // 3. Запись в Firebase
+        /* Фото: новое если загрузили, иначе сохраняем старое */
+        if (imgUrl)                 product.img = imgUrl;
+        else if (editId && currentImgUrl) product.img = currentImgUrl;
+
+        /* 3. Firebase */
         const ref = editId
             ? database.ref('products/' + editId)
             : database.ref('products').push();
@@ -425,23 +523,17 @@ async function saveProduct() {
     } catch (err) {
         console.error('saveProduct:', err);
         alert('⚠️ Ошибка: ' + err.message);
-
     } finally {
         btn.disabled    = false;
         btn.textContent = editId ? 'Сохранить изменения' : 'Опубликовать';
     }
 }
 
-/* ══════════════════════════════════════════════════════════
-   СПИСОК ТОВАРОВ (real-time listener)
-   ══════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   СПИСОК ТОВАРОВ (real-time)
+   ════════════════════════════════════════════════════════ */
 function fetchList() {
-    // Отписываемся от предыдущего listener (если был),
-    // чтобы не создавать дублирующиеся подписки
-    if (dbListenerRef) {
-        dbListenerRef.off();
-    }
-
+    if (dbListenerRef) { dbListenerRef.off(); }
     dbListenerRef = database.ref('products');
 
     dbListenerRef.on('value', snap => {
@@ -452,22 +544,16 @@ function fetchList() {
         const catF = document.getElementById('admin-filter-cat')?.value || 'all';
         const data = snap.val();
 
-        if (!data) {
-            container.innerHTML = '<p class="admin-empty">Список пуст</p>';
-            return;
-        }
+        if (!data) { container.innerHTML = '<p class="admin-empty">Список пуст</p>'; return; }
 
         const keys = Object.keys(data).reverse().filter(id => {
-            const p       = data[id];
-            const nameOk  = (p.name || '').toLowerCase().includes(q);
-            const catOk   = catF === 'all' || p.cat === catF || p.category === catF;
+            const p      = data[id];
+            const nameOk = (p.name || '').toLowerCase().includes(q);
+            const catOk  = catF === 'all' || p.cat === catF || p.category === catF;
             return nameOk && catOk;
         });
 
-        if (!keys.length) {
-            container.innerHTML = '<p class="admin-empty">Ничего не найдено</p>';
-            return;
-        }
+        if (!keys.length) { container.innerHTML = '<p class="admin-empty">Ничего не найдено</p>'; return; }
 
         container.innerHTML = keys.map(id => {
             const p      = data[id];
@@ -481,28 +567,26 @@ function fetchList() {
                     <span class="list-meta">${p.price} ₸ · ${p.cat || p.category || '—'}</span>
                 </div>
                 <div class="list-controls">
-                    <button class="list-btn btn-edit"
-                            onclick="editItem('${id}')">Ред.</button>
-                    <button class="list-btn ${isStop ? 'btn-toggle-ret' : 'btn-toggle-stop'}"
-                            onclick="toggleStock('${id}', ${isStop})">
-                        ${isStop ? 'Вернуть' : 'Стоп'}
+                    <button class="list-btn btn-edit"   onclick="editItem('${id}')">Ред.</button>
+                    <button class="list-btn ${isStop ? 'btn-toggle-ret':'btn-toggle-stop'}"
+                            onclick="toggleStock('${id}',${isStop})">
+                        ${isStop ? 'Вернуть':'Стоп'}
                     </button>
-                    <button class="list-btn btn-delete"
-                            onclick="deleteItem('${id}')">✕</button>
+                    <button class="list-btn btn-delete" onclick="deleteItem('${id}')">✕</button>
                 </div>
             </div>`;
         }).join('');
     });
 }
 
-/* ══════════════════════════════════════════════════════════
-   РЕДАКТИРОВАТЬ ТОВАР
-   ══════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   РЕДАКТИРОВАТЬ
+   ════════════════════════════════════════════════════════ */
 function editItem(id) {
     database.ref('products/' + id).once('value', snap => {
-        const p = snap.val();
-        if (!p) return;
-        editId = id;
+        const p = snap.val(); if (!p) return;
+        editId        = id;
+        currentImgUrl = p.img || null;
 
         setVal('p-name',        p.name  || '');
         setVal('p-price',       p.price || '');
@@ -512,85 +596,62 @@ function editItem(id) {
         setVal('p-type',        p.type  || '');
         setVal('product-badge', p.badge || '');
 
-        document.getElementById('form-title').textContent       = '✏️ Редактирование';
-        document.getElementById('add-btn').textContent          = 'Сохранить изменения';
-        document.getElementById('cancel-btn').style.display     = 'block';
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('form-title').textContent   = '✏️ Редактирование';
+        document.getElementById('add-btn').textContent      = 'Сохранить изменения';
+        document.getElementById('cancel-btn').style.display = 'block';
+        window.scrollTo({ top:0, behavior:'smooth' });
     });
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════
    СБРОС ФОРМЫ
-   ══════════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════ */
 function resetForm() {
-    editId = null;
-    ['p-name', 'p-price', 'p-desc', 'p-count'].forEach(id => setVal(id, ''));
-    setVal('p-cat',         'first');
-    setVal('p-type',        '');
-    setVal('product-badge', '');
-
-    const fileInput = document.getElementById('p-file');
-    const preview   = document.getElementById('img-preview');
-    const label     = document.getElementById('upload-label');
-
-    if (fileInput) fileInput.value = '';
-    if (preview)   { preview.style.display = 'none'; preview.src = ''; }
-    if (label)     label.style.display = 'block';
-
+    editId = null; currentImgUrl = null;
+    ['p-name','p-price','p-desc','p-count'].forEach(id => setVal(id, ''));
+    setVal('p-cat','first'); setVal('p-type',''); setVal('product-badge','');
+    const fi = document.getElementById('p-file');
+    const pr = document.getElementById('img-preview');
+    const lb = document.getElementById('upload-label');
+    if (fi) fi.value = '';
+    if (pr) { pr.style.display='none'; pr.src=''; }
+    if (lb) lb.style.display = 'block';
     document.getElementById('form-title').textContent       = '➕ Новое блюдо';
     document.getElementById('add-btn').textContent          = 'Опубликовать';
     document.getElementById('cancel-btn').style.display     = 'none';
 }
 
-/* ══════════════════════════════════════════════════════════
-   ПЕРЕКЛЮЧИТЬ НАЛИЧИЕ
-   ══════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════
+   ПЕРЕКЛЮЧИТЬ НАЛИЧИЕ / УДАЛИТЬ
+   ════════════════════════════════════════════════════════ */
 function toggleStock(id, isCurrentlyUnavailable) {
-    // isCurrentlyUnavailable=true → блюдо было "Стоп" → возвращаем (available:true)
-    // isCurrentlyUnavailable=false → блюдо было активно → ставим "Стоп" (available:false)
-    database.ref('products/' + id).update({
-        available: isCurrentlyUnavailable ? true : false,
-    });
+    database.ref('products/' + id).update({ available: isCurrentlyUnavailable ? true : false });
 }
-
-/* ══════════════════════════════════════════════════════════
-   УДАЛИТЬ ТОВАР
-   ══════════════════════════════════════════════════════════ */
 function deleteItem(id) {
-    if (confirm('Удалить это блюдо навсегда? Это действие нельзя отменить.')) {
+    if (confirm('Удалить это блюдо навсегда? Отменить нельзя.'))
         database.ref('products/' + id).remove();
-    }
 }
 
-/* ══════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════
    УТИЛИТЫ
-   ══════════════════════════════════════════════════════════ */
-function setVal(id, v) {
-    const el = document.getElementById(id);
-    if (el) el.value = v;
-}
+   ════════════════════════════════════════════════════════ */
+function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
 
 function escHtml(s) {
-    return String(s || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function showToast(msg) {
     const t = document.getElementById('admin-toast');
     if (!t) return;
     t.textContent = msg;
-    t.style.opacity   = '1';
+    t.style.opacity = '1';
     t.style.transform = 'translateX(-50%) translateY(0)';
     setTimeout(() => {
-        t.style.opacity   = '0';
+        t.style.opacity = '0';
         t.style.transform = 'translateX(-50%) translateY(20px)';
     }, 2800);
 }
 </script>
 </body>
 </html>
-Ы
