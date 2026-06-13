@@ -357,22 +357,24 @@ async function populateUpsellCheckboxes(selectedIds = []) {
         return;
     }
 
-   const items = Object.keys(raw)
+    const items = Object.keys(raw)
         .map(k => ({ id: k, ...raw[k] }))
         .filter(p => {
-            // Записываем категорию товара (проверяем оба возможных поля cat и category)
-            const currentCat = p.cat || p.category;
+            // Определяем категорию товара
+            const cat = p.cat || p.category;
             
-            // Фильтруем: товар должен быть доступен, это не само редактируемое блюдо,
-            // и его категория должна быть либо 'drinks' (Напитки), либо 'sauce' (Соусы и хлеб)
+            // СТРОГИЙ ФИЛЬТР: 
+            // 1. Товар доступен
+            // 2. Это не тот же самый товар, который мы сейчас редактируем
+            // 3. Категория строго 'drinks' (Напитки) или 'sauce' (Соусы и хлеб)
             return p.available !== false && 
                    p.id !== editId && 
-                   (currentCat === 'drinks' || currentCat === 'sauce');
+                   (cat === 'drinks' || cat === 'sauce');
         })
         .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ru'));
 
     if (!items.length) {
-        container.innerHTML = '<span style="opacity:.4;font-size:.8rem;">Нет доступных товаров</span>';
+        container.innerHTML = '<span style="opacity:.4;font-size:.8rem;">Нет напитков и соусов для рекомендации</span>';
         return;
     }
 
