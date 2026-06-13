@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>Управление | Pai Pai</title>
+    <title>Управление | Bakery Aigul</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -118,7 +118,7 @@
      ════════════════════════════════════════════════════════ -->
 <div id="screen-login">
     <div class="admin-box" style="max-width:380px; text-align:center;">
-        <div class="admin-title">Pai Pai Admin</div>
+       <div class="admin-title">Bakery Aigul Admin</div>
         <p style="opacity:.44; font-size:.84rem; margin-bottom:26px; line-height:1.6;">
             Войдите с помощью своего аккаунта Google.<br>
             Доступ разрешён только владельцу.
@@ -215,6 +215,25 @@
             <option value="hit">ХИТ 🔥</option>
             <option value="new">НОВИНКА ✨</option>
         </select>
+        <!-- ── КРОСС-СЕЙЛ ──────────────────────────────────────────── -->
+<label class="field-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:14px;">
+    <input type="checkbox" id="p-show-upsell"
+           onchange="handleUpsellToggle(this)"
+           style="accent-color:var(--primary);width:16px;height:16px;flex-shrink:0;">
+    Включить блок «С этим часто берут»
+</label>
+
+<div id="upsell-section" style="display:none;margin-top:4px;">
+    <label class="field-label">Блюда для рекомендации (макс. 4 шт.):</label>
+    <div id="upsell-checkboxes" style="
+        max-height:200px;overflow-y:auto;margin:6px 0;
+        background:rgba(255,255,255,.04);
+        border:1px solid rgba(255,255,255,.10);
+        border-radius:12px;padding:8px 12px;">
+        <span style="opacity:.4;font-size:.8rem;">Сначала отметьте чекбокс выше</span>
+    </div>
+</div>
+<!-- ── /КРОСС-СЕЙЛ ─────────────────────────────────────────── -->
 
         <label class="upload-area" for="p-file">
             <input type="file" id="p-file" accept="image/*" style="display:none;" onchange="showPreview(this)">
@@ -230,14 +249,17 @@
                 Отмена
             </button>
         </div>
+        
 
         <!-- СПИСОК ТОВАРОВ -->
         <hr class="admin-divider">
         <h3 style="font-size:.98rem; color:var(--primary); margin-bottom:10px;">Список меню</h3>
+        
 
         <div class="admin-filters">
             <input type="text" id="admin-search" placeholder="🔍 Поиск..." oninput="fetchList()">
             <select id="admin-filter-cat" onchange="fetchList()">
+                
                 <option value="all">Все категории</option>
                 <option value="breakfast">Завтраки</option>
                 <option value="first">Первые блюда</option>
@@ -262,6 +284,7 @@
 
     </div>
 </div>
+
 
 <!-- Toast-уведомление -->
 <div id="admin-toast"></div>
@@ -311,6 +334,69 @@ const IMGBB_KEY  = '19b2ea0cacae4c9328806e4c678db140';
 let editId         = null;
 let currentImgUrl  = null;   // URL фото при редактировании
 let dbListenerRef  = null;
+
+/* ════════════════════════════════════════════════════════════
+   КРОСС-СЕЙЛ — вспомогательные функции
+   ════════════════════════════════════════════════════════ */
+function handleUpsellToggle(cb) {
+    const section = document.getElementById('upsell-section');
+    if (!section) return;
+    section.style.display = cb.checked ? 'block' : 'none';
+    if (cb.checked) populateUpsellCheckboxes([]);
+}
+
+async function populateUpsellCheckboxes(selectedIds = []) {
+    const container = document.getElementById('upsell-checkboxes');
+    if (!container) return;
+    container.innerHTML = '<span style="opacity:.4;font-size:.8rem;">Загрузка...</span>';
+
+    const snap = await database.ref('products').once('value');
+    const raw  = snap.val();
+    if (!raw) {
+        container.innerHTML = '<span style="opacity:.4;font-size:.8rem;">Нет товаров в БД</span>';
+        return;
+    }
+
+    const items = Object.keys(raw)
+        .map(k => ({ id: k, ...raw[k] }))
+        .filter(p => p.available !== false && p.id !== editId)
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ru'));
+
+    if (!items.length) {
+        container.innerHTML = '<span style="opacity:.4;font-size:.8rem;">Нет доступных товаров</span>';
+        return;
+    }
+
+    container.innerHTML = items.map(p => `
+        <label style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;
+                      font-size:.82rem;border-bottom:1px solid rgba(255,255,255,.05);">
+            <input type="checkbox" value="${p.id}"
+                   ${selectedIds.includes(p.id) ? 'checked' : ''}
+                   style="accent-color:var(--primary);flex-shrink:0;"
+                   onchange="limitUpsellSelection(this)">
+            <img src="${escHtml(p.img || '')}" alt=""
+                 style="width:30px;height:30px;border-radius:6px;object-fit:cover;flex-shrink:0;"
+                 onerror="this.style.display='none'">
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                ${escHtml(p.name)}
+                <span style="color:var(--primary);font-weight:700;"> ${p.price} ₸</span>
+            </span>
+        </label>
+    `).join('');
+}
+
+function limitUpsellSelection(cb) {
+    const checked = document.querySelectorAll('#upsell-checkboxes input[type=checkbox]:checked');
+    if (checked.length > 4) {
+        cb.checked = false;
+        showToast('⚠️ Максимум 4 рекомендации!');
+    }
+}
+
+function getUpsellIds() {
+    return [...document.querySelectorAll('#upsell-checkboxes input[type=checkbox]:checked')]
+        .map(cb => cb.value);
+}
 
 /* ════════════════════════════════════════════════════════════
    ФУНКЦИИ ПЕРЕКЛЮЧЕНИЯ ЭКРАНОВ
@@ -462,7 +548,6 @@ function showPreview(input) {
    СОХРАНИТЬ ТОВАР
    ════════════════════════════════════════════════════════ */
 async function saveProduct() {
-    /* Перепроверяем авторизацию перед каждой записью */
     const user = firebase.auth().currentUser;
     if (!user || !ALLOWED_UIDS.includes(user.uid)) {
         alert('Сессия истекла. Войдите снова.');
@@ -496,22 +581,26 @@ async function saveProduct() {
             imgUrl = data.data.url;
         }
 
-        /* 2. Объект товара (структура не меняется — совместимость с БД) */
+        /* 2. Кросс-сейл */
+        const showUpsell = document.getElementById('p-show-upsell')?.checked === true;
+
+        /* 3. Объект товара */
         const product = {
             name,
             price,
-            desc:  document.getElementById('p-desc').value.trim()  || '',
-            count: document.getElementById('p-count').value.trim() || '',
-            cat:   document.getElementById('p-cat').value,
-            type:  document.getElementById('p-type').value,
-            badge: document.getElementById('product-badge').value,
+            desc:        document.getElementById('p-desc').value.trim()  || '',
+            count:       document.getElementById('p-count').value.trim() || '',
+            cat:         document.getElementById('p-cat').value,
+            type:        document.getElementById('p-type').value,
+            badge:       document.getElementById('product-badge').value,
+            showUpsell,
+            upsellItems: showUpsell ? getUpsellIds() : [],
         };
 
-        /* Фото: новое если загрузили, иначе сохраняем старое */
-        if (imgUrl)                 product.img = imgUrl;
+        if (imgUrl)                      product.img = imgUrl;
         else if (editId && currentImgUrl) product.img = currentImgUrl;
 
-        /* 3. Firebase */
+        /* 4. Firebase */
         const ref = editId
             ? database.ref('products/' + editId)
             : database.ref('products').push();
@@ -596,6 +685,16 @@ function editItem(id) {
         setVal('p-type',        p.type  || '');
         setVal('product-badge', p.badge || '');
 
+        /* Восстановить кросс-сейл */
+        const showUpsellCb  = document.getElementById('p-show-upsell');
+        const upsellSection = document.getElementById('upsell-section');
+        if (showUpsellCb && upsellSection) {
+            const show              = !!p.showUpsell;
+            showUpsellCb.checked        = show;
+            upsellSection.style.display = show ? 'block' : 'none';
+            if (show) populateUpsellCheckboxes(Array.isArray(p.upsellItems) ? p.upsellItems : []);
+        }
+
         document.getElementById('form-title').textContent   = '✏️ Редактирование';
         document.getElementById('add-btn').textContent      = 'Сохранить изменения';
         document.getElementById('cancel-btn').style.display = 'block';
@@ -610,6 +709,16 @@ function resetForm() {
     editId = null; currentImgUrl = null;
     ['p-name','p-price','p-desc','p-count'].forEach(id => setVal(id, ''));
     setVal('p-cat','first'); setVal('p-type',''); setVal('product-badge','');
+
+    /* Сброс кросс-сейла */
+    const showUpsellCb  = document.getElementById('p-show-upsell');
+    const upsellSection = document.getElementById('upsell-section');
+    const upsellCont    = document.getElementById('upsell-checkboxes');
+    if (showUpsellCb)  showUpsellCb.checked        = false;
+    if (upsellSection) upsellSection.style.display = 'none';
+    if (upsellCont)    upsellCont.innerHTML        =
+        '<span style="opacity:.4;font-size:.8rem;">Сначала отметьте чекбокс выше</span>';
+
     const fi = document.getElementById('p-file');
     const pr = document.getElementById('img-preview');
     const lb = document.getElementById('upload-label');

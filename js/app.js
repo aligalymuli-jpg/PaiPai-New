@@ -214,14 +214,16 @@ function loadImg(img) {
         if (sk) sk.classList.add('done');
     };
     img.onerror = () => {
-        img.src = 'https://placehold.co/400x300/0d1a10/c48c5d?text=Pai+Pai';
+        img.src = 'https://placehold.co/400x300/0d1a10/c48c5d?text=Bakery+Aigul';
         img.classList.add('loaded');
         const sk = img.closest('.img-wrapper')?.querySelector('.img-skeleton');
         if (sk) sk.classList.add('done');
     };
 }
-
 /* ── МОДАЛКА ТОВАРА ─────────────────────────────────────── */
+/* Категории, где кросс-сейл принудительно скрыт */
+const UPSELL_SKIP_CATS = new Set(['semi', 'pies', 'sweet_pies', 'sets']);
+
 window.openModal = function(id) {
     const p = products.find(x => x.id === id);
     if (!p) return;
@@ -231,38 +233,62 @@ window.openModal = function(id) {
 
     const mImg = document.getElementById('modalImg');
     mImg.src = p.img || '';
-    mImg.onerror = () => { mImg.src = 'https://placehold.co/470x240/0d1a10/c48c5d?text=Pai+Pai'; };
+    mImg.onerror = () => { mImg.src = 'https://placehold.co/470x240/0d1a10/c48c5d?text=Bakery+Aigul'; };
 
     document.getElementById('modalName').textContent  = p.name;
-    document.getElementById('modalDesc').textContent  = p.desc  || 'Традиционный рецепт Pai Pai.';
+    document.getElementById('modalDesc').textContent  = p.desc  || 'Традиционный рецепт Bakery Aigul.';
     document.getElementById('modalCount').textContent = p.count ? '🍴 ' + p.count : '';
     document.getElementById('modalPrice').textContent = p.price + ' ₸';
 
-    // Upsell
+    /* ── КРОСС-СЕЙЛ ─────────────────────────────────────────── */
     const uContainer = document.getElementById('upsell-container');
-    const extras = products.filter(x => x.cat === 'sauce' && x.id !== id && x.available !== false).slice(0, 4);
-    uContainer.innerHTML = extras.length ? `
-        <p class="upsell-title">С этим часто берут:</p>
-        <div class="upsell-list">
-            ${extras.map(x => `
-            <div class="upsell-item" onclick="addToCart('${x.id}')">
-                <img src="${esc(x.img)}" alt="${esc(x.name)}" onerror="this.src='https://placehold.co/80/0d1a10/c48c5d?text=P'">
-                <div class="upsell-name">${esc(x.name)}</div>
-                <div class="upsell-price">+${x.price} ₸</div>
-            </div>`).join('')}
-        </div>` : '';
+    const canUpsell  = p.showUpsell === true && !UPSELL_SKIP_CATS.has(p.cat);
+
+    if (canUpsell && Array.isArray(p.upsellItems) && p.upsellItems.length) {
+        const extras = p.upsellItems
+            .map(uid => products.find(x => x.id === uid && x.available !== false))
+            .filter(Boolean)
+            .slice(0, 4);
+
+        uContainer.innerHTML = extras.length ? `
+            <p class="upsell-title">С этим часто берут:</p>
+            <div class="upsell-list">
+                ${extras.map(x => `
+                <div class="upsell-item" onclick="addToCart('${x.id}')">
+                    <img src="${esc(x.img)}" alt="${esc(x.name)}"
+                         onerror="this.src='https://placehold.co/80/0d1a10/c48c5d?text=P'">
+                    <div class="upsell-name">${esc(x.name)}</div>
+                    <div class="upsell-price">+${x.price} ₸</div>
+                </div>`).join('')}
+            </div>` : '';
+    } else {
+        uContainer.innerHTML = '';
+    }
 
     document.getElementById('modalAddBtn').onclick = () => {
         addToCart(id);
-        overlay.style.display = 'none';
+        closeModalOverlay();   // фикс ghost-click из Задачи 3
     };
 
     overlay.style.display = 'flex';
 };
 
+/* ── ЗАКРЫТИЕ МОДАЛКИ (без ghost-click на мобиле) ──────────── */
+function closeModalOverlay() {
+    const overlay = document.getElementById('productModal');
+    if (!overlay) return;
+    overlay.style.pointerEvents = 'none';       // мгновенно блокируем тапы
+    setTimeout(() => {
+        overlay.style.display       = 'none';
+        overlay.style.pointerEvents = '';
+    }, 60);                                     // 60ms > задержка синтетического click на iOS
+}
+
 window.closeModal = (e) => {
-    if (e.target.id === 'productModal')
-        document.getElementById('productModal').style.display = 'none';
+    if (e.target.id !== 'productModal') return;
+    e.preventDefault();
+    e.stopPropagation();
+    closeModalOverlay();
 };
 
 /* ── ПОИСК ─────────────────────────────────────────────── */

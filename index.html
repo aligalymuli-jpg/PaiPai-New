@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#07100a">
-    <meta name="description" content="Pai Pai — доставка домашней еды в Алматы. Сытно, вкусно, по-домашнему.">
-    <title>Pai Pai | Доставка еды Алматы</title>
+    <meta name="description" content="Bakery Aigul — доставка домашней еды в Алматы. Сытно, вкусно, по-домашнему.">
+    <title>Bakery Aigul | Доставка еды Алматы</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +17,7 @@
 <!-- ПРЕЛОАДЕР -->
 <div id="preloader">
     <div style="text-align:center;">
-        <div class="loader-logo">Пай Пай</div>
+        <div class="loader-logo">Bakery Aigul</div>
         <div class="spinner"></div>
         <p class="loader-text">Загрузка меню...</p>
     </div>
@@ -31,7 +31,7 @@
 <!-- ШАПКА -->
 <header>
     <nav>
-        <a href="index.html" class="brand">Пай Пай<span>.</span></a>
+        <a href="index.html" class="brand">Bakery Aigul<span>.</span></a>
 
         <div class="nav-links">
             <a href="index.html" class="nav-link" style="color:var(--primary);">Меню</a>
@@ -56,7 +56,7 @@
 <!-- HERO -->
 <section class="hero">
     <div class="hero-content">
-        <h1>Пай Пай</h1>
+        <h1>Bakery Aigul</h1>
         <div class="hero-divider">
             <span></span>
             <i class="fas fa-leaf"></i>
@@ -179,7 +179,7 @@
 <!-- МОДАЛКА: ДЕТАЛИ ТОВАРА -->
 <div id="productModal" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-card" role="dialog" aria-modal="true">
-        <span class="close-btn" onclick="document.getElementById('productModal').style.display='none'" aria-label="Закрыть">×</span>
+        <span class="close-btn" onclick="event.stopPropagation();event.preventDefault();closeModalOverlay();" aria-label="Закрыть">×</span>
         <img id="modalImg" src="" alt="">
         <div class="modal-info">
             <h2 id="modalName"></h2>
