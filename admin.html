@@ -357,9 +357,18 @@ async function populateUpsellCheckboxes(selectedIds = []) {
         return;
     }
 
-    const items = Object.keys(raw)
+   const items = Object.keys(raw)
         .map(k => ({ id: k, ...raw[k] }))
-        .filter(p => p.available !== false && p.id !== editId)
+        .filter(p => {
+            // Записываем категорию товара (проверяем оба возможных поля cat и category)
+            const currentCat = p.cat || p.category;
+            
+            // Фильтруем: товар должен быть доступен, это не само редактируемое блюдо,
+            // и его категория должна быть либо 'drinks' (Напитки), либо 'sauce' (Соусы и хлеб)
+            return p.available !== false && 
+                   p.id !== editId && 
+                   (currentCat === 'drinks' || currentCat === 'sauce');
+        })
         .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ru'));
 
     if (!items.length) {
