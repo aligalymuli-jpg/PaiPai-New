@@ -133,6 +133,8 @@ window.renderMenu = function(category = 'all', filtered = null) {
 
     if (!isAdmin) data = data.filter(p => p.available !== false);
 
+    data.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+
     if (!data.length) {
         container.innerHTML = `<div class="empty-state"><i class="fas fa-leaf"></i><p>Пока пусто...</p></div>`;
         return;
